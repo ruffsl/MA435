@@ -22,7 +22,7 @@ function varargout = PlateLoaderGUI(varargin)
 
 % Edit the above text to modify the response to help PlateLoaderGUI
 
-% Last Modified by GUIDE v2.5 18-Mar-2013 14:13:59
+% Last Modified by GUIDE v2.5 19-Mar-2013 12:22:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,7 +56,9 @@ function PlateLoaderGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 handles.user.to = 1;
 handles.user.from = 1;
+handles.user.hasPlate = false;
 addImageToAxes('robot_background.jpg', handles.axes1, 0);
+handles.user.usingSim = true;
 handles.user.robot = PlateLoaderSim(get(handles.edit_com, 'String'));
 set(handles.text_status, 'String', handles.user.robot.getStatus());
 addImageToAxes('gripper_closed_no_plate.jpg', handles.axes2, 100);
@@ -64,8 +66,51 @@ handles.user.homePosition2 = get(handles.axes2, 'Position');
 addImageToAxes('extended_bars.jpg', handles.axes3, 50);
 handles.user.homePosition3 = get(handles.axes3, 'Position');
 delete(get(handles.axes3, 'Children'));
-set(handles.table_timings, 'Data', handles.user.robot.defaultTimeTable(1:5,2:4));
+handles.user.defaultTimeTable = handles.user.robot.defaultTimeTable;
+set(handles.table_timings, 'Data', handles.user.defaultTimeTable(1:5,2:4));
 % Update handles structure
+guidata(hObject, handles);
+
+function bool = platePresent(hObject, handles)
+bool = false;
+if (~handles.user.usingSim)
+   %do nothing
+elseif (~handles.user.robot.isZAxisExtended)
+   %also do nothing
+else
+    switch (handles.user.robot.xAxisPosition)
+        case 1
+            if get(handles.check_pos1, 'Value')
+                bool = true;
+                set(handles.check_pos1, 'Value', false);
+                delete(get(handles.axes4, 'Children'));
+            end
+        case 2
+            if get(handles.check_pos2, 'Value')
+                bool = true;
+                set(handles.check_pos2, 'Value', false);
+                delete(get(handles.axes5, 'Children'));
+            end
+        case 3
+            if get(handles.check_pos3, 'Value')
+                bool = true;
+                set(handles.check_pos3, 'Value', false);
+                delete(get(handles.axes6, 'Children'));
+            end
+        case 4
+            if get(handles.check_pos4, 'Value')
+                bool = true;
+                set(handles.check_pos4, 'Value', false);
+                delete(get(handles.axes7, 'Children'));
+            end
+        case 5
+            if get(handles.check_pos5, 'Value')
+                bool = true;
+                set(handles.check_pos5, 'Value', false);
+                delete(get(handles.axes8, 'Children'));
+            end
+    end
+end
 guidata(hObject, handles);
 
 function pos = updateXPosition(hObject, handles)
@@ -133,32 +178,60 @@ guidata(hObject, handles);
 
 function pos = updateZPosition(hObject, handles)
 yPos = get(handles.axes2, 'Position');
+addImageToAxes('extended_bars.jpg', handles.axes3, 50);
+tempPos = get(handles.axes3, 'Position');
 if (handles.user.robot.isZAxisExtended && yPos(2) == handles.user.homePosition2(2))
+    set(handles.axes3, 'Position', [tempPos(1) tempPos(2)+120 tempPos(3) 1]);
     for i=1:24
         set(handles.axes2, 'Position', get(handles.axes2, 'Position') + [0 -5 0 0]);
+        set(handles.axes3, 'Position', get(handles.axes3, 'Position') + [0 -5 0 5]);
         pause(0.03);
         guidata(hObject, handles);
     end
-    addImageToAxes('extended_bars.jpg', handles.axes3, 50);
 elseif (~handles.user.robot.isZAxisExtended && yPos(2) ~= handles.user.homePosition2(2))
-    delete(get(handles.axes3, 'Children'));
     for i=1:24
         set(handles.axes2, 'Position', get(handles.axes2, 'Position') + [0 5 0 0]);
+        set(handles.axes3, 'Position', get(handles.axes3, 'Position') + [0 5 0 -5]);
         pause(0.03);
         guidata(hObject, handles);
     end
+    delete(get(handles.axes3, 'Children'));
+    set(handles.axes3, 'Position', [tempPos(1) tempPos(2) tempPos(3) 1]);
 else
     %do nothing
 end
 guidata(hObject, handles);
 
-function pos = updateGripperPosition(hObject, handles)
+function [hObject, handles] = updateGripperPosition(hObject, handles)
 if ~handles.user.robot.isGripperClosed
     addImageToAxes('gripper_open_no_plate.jpg', handles.axes2, 100);
-elseif handles.user.robot.isPlatePresent
+    handles.user.hasPlate
+    if (handles.user.hasPlate)
+        switch (handles.user.robot.xAxisPosition)
+            case 1
+                set(handles.check_pos1, 'Value', true);
+                addImageToAxes('plate_only.jpg', handles.axes4, 80);
+            case 2
+                set(handles.check_pos2, 'Value', true);
+                addImageToAxes('plate_only.jpg', handles.axes5, 80);
+            case 3
+                set(handles.check_pos3, 'Value', true);
+                addImageToAxes('plate_only.jpg', handles.axes6, 80);
+            case 4
+                set(handles.check_pos4, 'Value', true);
+                addImageToAxes('plate_only.jpg', handles.axes7, 80);
+            case 5
+                set(handles.check_pos5, 'Value', true);
+                addImageToAxes('plate_only.jpg', handles.axes8, 80);
+        end
+    end
+    handles.user.hasPlate = false;
+elseif (handles.user.robot.isPlatePresent || platePresent(hObject, handles) || handles.user.hasPlate)
     addImageToAxes('gripper_with_plate.jpg', handles.axes2, 100);
+    handles.user.hasPlate = true;
 else
     addImageToAxes('gripper_closed_no_plate.jpg', handles.axes2, 100);
+    handles.user.hasPlate = false;
 end
 guidata(hObject, handles);
         
@@ -184,6 +257,7 @@ function button_connect_Callback(hObject, eventdata, handles)
 % hObject    handle to button_connect (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.user.usingSim = false;
 handles.user.robot.shutdown();
 handles.user.robot = PlateLoader(str2double(get(handles.edit_com, 'String')));
 guidata(hObject, handles);
@@ -194,6 +268,7 @@ function button_disconnect_Callback(hObject, eventdata, handles)
 % hObject    handle to button_disconnect (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.user.usingSim = true;
 handles.user.robot.shutdown();
 handles.user.robot = PlateLoaderSim(str2double(get(handles.edit_com, 'String')));
 guidata(hObject, handles);
@@ -272,7 +347,7 @@ function button_reset_delay_Callback(hObject, eventdata, handles)
 % hObject    handle to button_reset_delay (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.table_timings, 'Data', handles.user.robot.defaultTimeTable(1:5,2:4));
+set(handles.table_timings, 'Data', handles.user.defaultTimeTable(1:5,2:4));
 guidata(hObject, handles);
 
 
@@ -389,9 +464,26 @@ function button_move_Callback(hObject, eventdata, handles)
 % hObject    handle to button_move (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.user.from
-handles.user.to
 handles.user.robot.movePlate(handles.user.from, handles.user.to);
+handles.user.robot.x(handles.user.from);
+updateXPosition(hObject, handles);
+handles.user.robot.open();
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.extend();
+updateZPosition(hObject, handles);
+handles.user.robot.close();
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
+handles.user.robot.x(handles.user.to);
+updateXPosition(hObject, handles);
+handles.user.robot.extend();
+updateZPosition(hObject, handles);
+handles.user.robot.open();
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
+handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 
 
@@ -412,41 +504,53 @@ function button_frog_Callback(hObject, eventdata, handles)
 handles.user.robot.x(1);
 updateXPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
 handles.user.robot.x(2);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
 handles.user.robot.x(4);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
+handles.user.hasPlate
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
+handles.user.robot.retract();
+updateZPosition(hObject, handles);
+handles.user.hasPlate
 handles.user.robot.x(5);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.retract();
 updateZPosition(hObject, handles);
 
@@ -459,76 +563,143 @@ function button_snake_Callback(hObject, eventdata, handles)
 handles.user.robot.x(2);
 updateXPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(1);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(2);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(4);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(2);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(4);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(5);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(3);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.close();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.x(4);
 updateXPosition(hObject, handles);
 handles.user.robot.extend();
 updateZPosition(hObject, handles);
 handles.user.robot.open();
-updateGripperPosition(hObject, handles);
+[hObject, handles] = updateGripperPosition(hObject, handles);
 handles.user.robot.retract();
 updateZPosition(hObject, handles);
+
+
+% --- Executes on button press in check_pos5.
+function check_pos5_Callback(hObject, eventdata, handles)
+% hObject    handle to check_pos5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of check_pos5
+if get(hObject, 'Value')
+    addImageToAxes('plate_only.jpg', handles.axes8, 80);
+else
+    delete(get(handles.axes8, 'Children'));
+end
+
+
+% --- Executes on button press in check_pos4.
+function check_pos4_Callback(hObject, eventdata, handles)
+% hObject    handle to check_pos4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of check_pos4
+if get(hObject, 'Value')
+    addImageToAxes('plate_only.jpg', handles.axes7, 80);
+else
+    delete(get(handles.axes7, 'Children'));
+end
+
+% --- Executes on button press in check_pos3.
+function check_pos3_Callback(hObject, eventdata, handles)
+% hObject    handle to check_pos3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of check_pos3
+if get(hObject, 'Value')
+    addImageToAxes('plate_only.jpg', handles.axes6, 80);
+else
+    delete(get(handles.axes6, 'Children'));
+end
+
+% --- Executes on button press in check_pos2.
+function check_pos2_Callback(hObject, eventdata, handles)
+% hObject    handle to check_pos2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of check_pos2
+if get(hObject, 'Value')
+    addImageToAxes('plate_only.jpg', handles.axes5, 80);
+else
+    delete(get(handles.axes5, 'Children'));
+end
+
+% --- Executes on button press in check_pos1.
+function check_pos1_Callback(hObject, eventdata, handles)
+% hObject    handle to check_pos1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of check_pos1
+if get(hObject, 'Value')
+    addImageToAxes('plate_only.jpg', handles.axes4, 80);
+else
+    delete(get(handles.axes4, 'Children'));
+end
