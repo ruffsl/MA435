@@ -7,13 +7,13 @@
 
 #define TEAM_NUMBER 24
 char manufacturer[] = "Rose-Hulman";
-char model[] = "Arm Scripts";
+char model[] = "My Sliders and Buttons";
 char versionStr[] = "1.0";
         
 // Only Manufacturer, Model, and Version matter to Android
 AndroidAccessory acc(manufacturer,
                      model,
-                     "Basic command set to carry out Arm Scripts",
+                     "Basic command set to carry out Sliders and Buttons",
                      versionStr,
                      "https://sites.google.com/site/me435spring2013/",
                      "12345");
@@ -23,9 +23,9 @@ byte txBuf[64];
 // Note, when sending commands to Android I don't add the '\n'.
 // Turned out to be easier to just assume the whole message arrives together.
 // Seems to work fine.  Just separate into different write() commands.
-char rightButtonScript[] = "port_ball";
-char leftButtonScript[] = "center_ball";
-char selectButtonScript[] = "starboard_ball";
+char rightButtonScript[] = "bad_ball";
+char leftButtonScript[] = "good_ball";
+char selectButtonScript[] = "ball_present";
 
 /***  Pin I/O   ***/ 
 #define PIN_RIGHT_BUTTON 2
