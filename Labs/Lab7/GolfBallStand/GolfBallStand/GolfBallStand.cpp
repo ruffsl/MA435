@@ -118,62 +118,92 @@ int GolfBallStand::determineBallColor(int location) {
 	location = (location == LOCATION_3 ? 3 : location)-1;
 
 	if (offReading > 950) {	
-		char redError;
-		char greenError;
-		char blueError;
-		char whiteError;
+		double redError;
+		double greenError;
+		double blueError;
+		double whiteError;
 		
-		redError = (redReading-ballRedVal[location][0])^2;
-		greenError = (greenReading-ballRedVal[location][1])^2;
-		blueError = (blueReading-ballRedVal[location][2])^2;
-		whiteError = (whiteReading-ballRedVal[location][3])^2;
-		int redBallError = redError + greenError + blueError + whiteError;
+		double colorErrors[6];
 		
-		redError = (redReading-ballYellowVal[location][0])^2;
-		greenError = (greenReading-ballYellowVal[location][1])^2;
-		blueError = (blueReading-ballYellowVal[location][2])^2;
-		whiteError = (whiteReading-ballYellowVal[location][3])^2;
-		int yellowBallError = redError + greenError + blueError + whiteError;
+		redError = pow(redReading-ballRedVal[location][0], 2);
+		greenError = pow(greenReading-ballRedVal[location][1],2);
+		blueError = pow(blueReading-ballRedVal[location][2],2);
+		whiteError = pow(whiteReading-ballRedVal[location][3],2);
+		colorErrors[0] = redError + greenError + blueError + whiteError;
 		
-		redError = (redReading-ballGreenVal[location][0])^2;
-		greenError = (greenReading-ballGreenVal[location][1])^2;
-		blueError = (blueReading-ballGreenVal[location][2])^2;
-		whiteError = (whiteReading-ballGreenVal[location][3])^2;
-		int greenBallError = redError + greenError + blueError + whiteError;
+		redError = pow(redReading-ballYellowVal[location][0],2);
+		greenError = pow(greenReading-ballYellowVal[location][1],2);
+		blueError = pow(blueReading-ballYellowVal[location][2],2);
+		whiteError = pow(whiteReading-ballYellowVal[location][3],2);
+		colorErrors[1] = redError + greenError + blueError + whiteError;
 		
-		redError = (redReading-ballBlueVal[location][0])^2;
-		greenError = (greenReading-ballBlueVal[location][1])^2;
-		blueError = (blueReading-ballBlueVal[location][2])^2;
-		whiteError = (whiteReading-ballBlueVal[location][3])^2;
-		int blueBallError = redError + greenError + blueError + whiteError;
+		redError = pow(redReading-ballGreenVal[location][0],2);
+		greenError = pow(greenReading-ballGreenVal[location][1],2);
+		blueError = pow(blueReading-ballGreenVal[location][2],2);
+		whiteError = pow(whiteReading-ballGreenVal[location][3],2);
+		colorErrors[2] = redError + greenError + blueError + whiteError;
 		
-		redError = (redReading-ballWhiteVal[location][0])^2;
-		greenError = (greenReading-ballWhiteVal[location][1])^2;
-		blueError = (blueReading-ballWhiteVal[location][2])^2;
-		whiteError = (whiteReading-ballWhiteVal[location][3])^2;
-		int whiteBallError = redError + greenError + blueError + whiteError;
+		redError = pow(redReading-ballBlueVal[location][0],2);
+		greenError = pow(greenReading-ballBlueVal[location][1],2);
+		blueError = pow(blueReading-ballBlueVal[location][2],2);
+		whiteError = pow(whiteReading-ballBlueVal[location][3],2);
+		colorErrors[3] = redError + greenError + blueError + whiteError;
 		
-		TODO;
-		//TODO Chose the one with the smallest error to find the color
+		redError = pow(redReading-ballWhiteVal[location][0],2);
+		greenError = pow(greenReading-ballWhiteVal[location][1],2);
+		blueError = pow(blueReading-ballWhiteVal[location][2],2);
+		whiteError = pow(whiteReading-ballWhiteVal[location][3],2);
+		colorErrors[4] = redError + greenError + blueError + whiteError;
 		
-		// if(){
-			// returnBallType = BALL_RED;
-		// }
-		// if(redPass&&greenPass&&bluePass&&whitePass){
-			// returnBallType = BALL_YELLOW;
-		// }
-		// if(redPass&&greenPass&&bluePass&&whitePass){
-			// returnBallType = BALL_GREEN;
-		// }
-		// if(redPass&&greenPass&&bluePass&&whitePass){
-			// returnBallType = BALL_BLUE;
-		// }
-		// if(redPass&&greenPass&&bluePass&&whitePass){
-			// returnBallType = BALL_WHITE;
-		// }
-		// if(redPass&&greenPass&&bluePass&&whitePass){
-			// returnBallType = BALL_BLACK;
-		// }
+		redError = pow(redReading-ballBlackVal[location][0],2);
+		greenError = pow(greenReading-ballBlackVal[location][1],2);
+		blueError = pow(blueReading-ballBlackVal[location][2],2);
+		whiteError = pow(whiteReading-ballBlackVal[location][3],2);
+		colorErrors[5] = redError + greenError + blueError + whiteError;
+		
+		int i, j=0;
+		Serial.println();
+		Serial.print("Errors for colors\n");
+		Serial.print("  LED red error     = ");
+		Serial.println(colorErrors[0]);
+		Serial.print("  LED yellow error  = ");
+		Serial.println(colorErrors[1]);
+		Serial.print("  LED green error   = ");
+		Serial.println(colorErrors[2]);
+		Serial.print("  LED blue error    = ");
+		Serial.println(colorErrors[3]);
+		Serial.print("  LED white error   = ");
+		Serial.println(colorErrors[4]);
+		Serial.print("  LED black error   = ");
+		Serial.println(colorErrors[5]);
+		for (i = 1; i < 6; i++) {
+			if (colorErrors[j] > min(colorErrors[j], colorErrors[i])) {
+				j=i;
+			}
+		}
+		int minError = colorErrors[j];
+		switch (j) {
+			case 0:
+				returnBallType = BALL_RED;
+				break;
+			case 1:
+				returnBallType = BALL_YELLOW;
+				break;
+			case 2:
+				returnBallType = BALL_GREEN;
+				break;
+			case 3:
+				returnBallType = BALL_BLUE;
+				break;
+			case 4:
+				returnBallType = BALL_WHITE;
+				break;
+			case 5:
+				returnBallType = BALL_BLACK;
+				break;
+			default:
+				returnBallType = BALL_NONE;
+		}
 	}
 	
 	Serial.println();

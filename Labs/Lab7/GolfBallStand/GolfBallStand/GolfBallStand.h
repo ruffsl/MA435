@@ -78,7 +78,7 @@ const int ballYellowVal[3][4] = {{430,398,900,276},
 								{464,418,919,300},
 								{321,692,733,270}};
 
-const int ballGreenVal[3][4] = 	{{791,571,868,484},
+const int ballGreenVal[3][4] = 	{{843,566,895,501},
 								{907,655,954,607},
 								{865,864,787,638}};
 
@@ -105,7 +105,7 @@ const int ballBlackVal[3][4] = 	{{941,882,965,800},
 #define LED_UNDER			0x02
 #define LED_UNDER_AND_FRONT	0x03
 
-#define TIME_DELAY			100
+#define TIME_DELAY			500
 
 
 class GolfBallStand
