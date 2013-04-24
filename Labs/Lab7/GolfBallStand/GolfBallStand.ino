@@ -1,13 +1,37 @@
+#include <Max3421e.h>
+#include <Usb.h>
+#include <AndroidAccessory.h>
 #include <GolfBallStand.h>
 #include <LiquidCrystal.h>
 #include <Servo.h>
 #include <ArmServos.h>
+#include <ArmServosSpeedControlled.h>
+#include <RobotAsciiCom.h>
+
+
+
+char manufacturer[] = "Rose-Hulman";
+char model[] = "My Sliders And Buttons";
+char versionStr[] = "1.0";
+        
+// Only Manufacturer, Model, and Version matter to Android
+AndroidAccessory acc(manufacturer,
+                     model,
+                     "Basic command set to carry out Sliders and Buttons",
+                     versionStr,
+                     "https://sites.google.com/site/me435spring2013/",
+                     "12345");
+byte rxBuf[255];
 
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19, 20);
 #define LINE_1 0
 #define LINE_2 1
 
-ArmServos robotArm;
+ArmServosSpeedControlled armServos;
+RobotAsciiCom robotCom;
+char ball_present[] = "present_ball";
+char good_ball[] = "good_ball";
+char bad_ball[] = "bad_ball";
 
 GolfBallStand stand;
 int ballColor_1;
@@ -78,15 +102,79 @@ void setup()  {
   servoAngles[4] = RESET_JOINT_4_ANGLE;
   servoAngles[5] = RESET_JOINT_5_ANGLE;
   servoAngles[0] = RESET_GRIPPER_DISTANCE;
-  robotArm.attach();
-  updateServos();
-  stand.setLedState(LED_GREEN, LOCATION_1 | LOCATION_2 | LOCATION_3, LED_UNDER_AND_FRONT);
+  armServos.attach();
+  robotCom.registerPositionCallback(positionCallback);
+  robotCom.registerJointAngleCallback(jointAngleCallback);
+  robotCom.registerGripperCallback(gripperCallback);
+  lcd.clear();
+  lcd.print("Ready");
+  delay(1500);
+  acc.powerOn();
 }
 
+void positionCallback(int joint1Angle, int joint2Angle, int joint3Angle, int joint4Angle, int joint5Angle) {
+  //armServos.setPosition(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle);
+  armServos.setJointAngle(1, joint1Angle);
+  armServos.setJointAngle(2, joint2Angle);
+  armServos.setJointAngle(3, joint3Angle);
+  armServos.setJointAngle(4, joint4Angle);
+  armServos.setJointAngle(5, joint5Angle);
+  lcd.clear();
+  lcd.print("Position:");
+  lcd.setCursor(0, LINE_2);
+  lcd.print(joint1Angle);
+  lcd.print(" ");
+  lcd.print(joint2Angle);
+  lcd.print(" ");
+  lcd.print(joint3Angle);
+  lcd.print(" ");
+  lcd.print(joint4Angle);
+  lcd.print(" ");
+  lcd.print(joint5Angle);
+}
+
+void jointAngleCallback(byte jointNumber, int jointAngle) {
+  armServos.setJointAngle(jointNumber, jointAngle);
+  lcd.clear();
+  lcd.print("Joint angle:");
+  lcd.setCursor(0, LINE_2);
+  lcd.print("J");
+  lcd.print(jointNumber);
+  lcd.print(" move to ");
+  lcd.print(jointAngle);
+}
+
+void gripperCallback(int gripperDistance) {
+  if (gripperDistance < 10) {
+    gripperDistance = 10;
+  }
+  armServos.setGripperDistance(gripperDistance);
+  lcd.clear();
+  lcd.print("Gripper:");
+  lcd.setCursor(0, LINE_2);
+  lcd.print("Gripper to ");
+  lcd.print(gripperDistance);
+}   
+
 void loop(){
-  
-  stand.determineBallColor(LOCATION_1);
-  
+  if (acc.isConnected()) {
+    int len = acc.read(rxBuf, sizeof(rxBuf), 1);
+    if (len > 0) {
+      robotCom.handleRxBytes(rxBuf, len);
+    }
+    if (stand.getAnalogReading(LOCATION_EXTERNAL) > 950) {
+      acc.write(ball_present, sizeof(ball_present));
+      delay(12000);
+      int val = stand.determineBallColor(LOCATION_2);
+      if (val >= 0) {
+        acc.write(good_ball, sizeof(good_ball));
+        delay(12000);
+      } else {
+        acc.write(bad_ball, sizeof(bad_ball));
+        delay(12000);
+      }
+    }
+  }
 //  delay(1000);
 //  stand.setLedState(LED_RED, LOCATION_1 | LOCATION_2 | LOCATION_3, LED_UNDER_AND_FRONT);
 //  delay(1000);
@@ -219,15 +307,6 @@ void updateLcd() {
   lcd.setCursor(10, LINE_2);
   lcd.print(servoAngles[0]);
   lcd.print("   ");
-}
-
-void updateServos() {
-  robotArm.setPosition(servoAngles[1],
-      servoAngles[2],
-      servoAngles[3],
-      servoAngles[4],
-      servoAngles[5]);
-  robotArm.setGripperDistance(servoAngles[0]);
 }
   
 void int0_isr() {
