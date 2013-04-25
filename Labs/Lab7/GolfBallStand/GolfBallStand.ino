@@ -1,14 +1,10 @@
 #include <Max3421e.h>
 #include <Usb.h>
 #include <AndroidAccessory.h>
-#include <GolfBallStand.h>
 #include <LiquidCrystal.h>
-#include <Servo.h>
-#include <ArmServos.h>
-#include <ArmServosSpeedControlled.h>
 #include <RobotAsciiCom.h>
-
-
+#include <WildThumperCom.h>
+#include <GolfBallStand.h>
 
 char manufacturer[] = "Rose-Hulman";
 char model[] = "My Sliders And Buttons";
@@ -22,13 +18,14 @@ AndroidAccessory acc(manufacturer,
                      "https://sites.google.com/site/me435spring2013/",
                      "12345");
 byte rxBuf[255];
-
+#define BATTERY _VOLTAGE_REPLY_LENGTH 27
+byte txBuf[64];
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19, 20);
 #define LINE_1 0
 #define LINE_2 1
 
-ArmServosSpeedControlled armServos;
 RobotAsciiCom robotCom;
+WildThumperCom wildThumperCom(0);
 char ball_present[] = "present_ball";
 char good_ball[] = "good_ball";
 char bad_ball[] = "bad_ball";
@@ -57,6 +54,7 @@ volatile int mainEventFlags = 0;
 #define FLAG_INTERRUPT_0 0x01
 #define FLAG_INTERRUPT_1 0x02
 #define FLAG_INTERRUPT_2 0x04
+#define FLAG_NEED_TO_SEND_BATTERY_VOLTAGE 0x08
 
 int servoAngles[6];
 #define RESET_JOINT_1_ANGLE 0
@@ -74,9 +72,14 @@ int servoAngles[6];
 int currentJoint = 0;
 #define MIN_CURRENT_JOINT 0
 #define MAX_CURRENT_JOINT 5
+#define NO_BALL_DETECTED 0
+#define MOVING_BALL_TO_SENSOR 1
+#define HANDLING_BALL 2
+int STAGE = NO_BALL_DETECTED;
+boolean GOOD = false;
 
 void setup()  {
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(PIN_LED_1, OUTPUT);
   pinMode(PIN_LED_2, OUTPUT);
   pinMode(PIN_LED_3, OUTPUT);
@@ -96,29 +99,38 @@ void setup()  {
   attachInterrupt(1, int1_isr, FALLING);
   attachInterrupt(2, int2_isr, FALLING);
   lcd.begin(16, 2);
-  servoAngles[1] = RESET_JOINT_1_ANGLE;
-  servoAngles[2] = RESET_JOINT_2_ANGLE;
-  servoAngles[3] = RESET_JOINT_3_ANGLE;
-  servoAngles[4] = RESET_JOINT_4_ANGLE;
-  servoAngles[5] = RESET_JOINT_5_ANGLE;
-  servoAngles[0] = RESET_GRIPPER_DISTANCE;
-  armServos.attach();
-  robotCom.registerPositionCallback(positionCallback);
-  robotCom.registerJointAngleCallback(jointAngleCallback);
-  robotCom.registerGripperCallback(gripperCallback);
+  // Register callbacks for commands you might receive from Android.
+  robotCom.registerWheelSpeedCallback(wheelSpeedMessageFromAndroid);
+  robotCom.registerPositionCallback(positionMessageFromAndroid);
+  robotCom.registerJointAngleCallback(jointAngleMessageFromAndroid);
+  robotCom.registerGripperCallback(gripperMessageFromAndroid);
+  robotCom.registerBatteryVoltageRequestCallback(batteryVoltageRequestFromAndroid);
+  // Note, not using the wheel current feature.
+  // Register callbacks for commands you might receive from the Wild Thumper.
+  wildThumperCom.registerBatteryVoltageReplyCallback(batteryVoltageReplyFromThumper);
   lcd.clear();
   lcd.print("Ready");
   delay(1500);
   acc.powerOn();
 }
 
-void positionCallback(int joint1Angle, int joint2Angle, int joint3Angle, int joint4Angle, int joint5Angle) {
-  //armServos.setPosition(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle);
-  armServos.setJointAngle(1, joint1Angle);
-  armServos.setJointAngle(2, joint2Angle);
-  armServos.setJointAngle(3, joint3Angle);
-  armServos.setJointAngle(4, joint4Angle);
-  armServos.setJointAngle(5, joint5Angle);
+void wheelSpeedMessageFromAndroid(byte leftMode, byte rightMode, byte leftDutyCycle, byte rightDutyCycle) {
+  wildThumperCom.sendWheelSpeed(leftMode, rightMode, leftDutyCycle, rightDutyCycle);  
+  lcd.clear();
+  lcd.print("Wheel speed:");
+  lcd.setCursor(0, LINE_2);
+  lcd.print("L");
+  lcd.print(leftMode);
+  lcd.print(" R");
+  lcd.print(rightMode);
+  lcd.print(" L");
+  lcd.print(leftDutyCycle);
+  lcd.print(" R");
+  lcd.print(rightDutyCycle);
+}
+
+void positionMessageFromAndroid(int joint1Angle, int joint2Angle, int joint3Angle, int joint4Angle, int joint5Angle) {
+  wildThumperCom.sendPosition(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle);  
   lcd.clear();
   lcd.print("Position:");
   lcd.setCursor(0, LINE_2);
@@ -133,8 +145,8 @@ void positionCallback(int joint1Angle, int joint2Angle, int joint3Angle, int joi
   lcd.print(joint5Angle);
 }
 
-void jointAngleCallback(byte jointNumber, int jointAngle) {
-  armServos.setJointAngle(jointNumber, jointAngle);
+void jointAngleMessageFromAndroid(byte jointNumber, int jointAngle) {
+  wildThumperCom.sendJointAngle(jointNumber, jointAngle);
   lcd.clear();
   lcd.print("Joint angle:");
   lcd.setCursor(0, LINE_2);
@@ -144,11 +156,11 @@ void jointAngleCallback(byte jointNumber, int jointAngle) {
   lcd.print(jointAngle);
 }
 
-void gripperCallback(int gripperDistance) {
+void gripperMessageFromAndroid(int gripperDistance) {
   if (gripperDistance < 10) {
     gripperDistance = 10;
   }
-  armServos.setGripperDistance(gripperDistance);
+  wildThumperCom.sendGripperDistance(gripperDistance);
   lcd.clear();
   lcd.print("Gripper:");
   lcd.setCursor(0, LINE_2);
@@ -156,24 +168,94 @@ void gripperCallback(int gripperDistance) {
   lcd.print(gripperDistance);
 }   
 
+void batteryVoltageRequestFromAndroid(void) {
+  wildThumperCom.sendBatteryVoltageRequest();
+}
+
+void batteryVoltageReplyFromThumper(int batteryMillivolts) {
+  // Send to Android from within the main event loop.
+  mainEventFlags |= FLAG_NEED_TO_SEND_BATTERY_VOLTAGE;
+  sprintf((char *) txBuf, "BATTERY VOLTAGE REPLY %d.%03d", batteryMillivolts / 1000, batteryMillivolts % 1000);  
+  
+  // Display battery voltage on LCD.
+  lcd.clear();
+  lcd.print("Battery voltage:");
+  lcd.setCursor(0, LINE_2);
+  lcd.print(batteryMillivolts / 1000);
+  lcd.print(".");
+  if (batteryMillivolts % 1000  < 100) {
+    lcd.print("0");
+  }
+  if (batteryMillivolts % 1000 < 10) {
+    lcd.print("0");
+  }
+  lcd.print(batteryMillivolts % 1000);
+}
+
 void loop(){
+  // See if there is a new message from Android.
   if (acc.isConnected()) {
     int len = acc.read(rxBuf, sizeof(rxBuf), 1);
     if (len > 0) {
       robotCom.handleRxBytes(rxBuf, len);
     }
-    if (stand.getAnalogReading(LOCATION_EXTERNAL) > 950) {
+    if (mainEventFlags & FLAG_INTERRUPT_0) {
+      delay(20);
+      mainEventFlags &= ~FLAG_INTERRUPT_0;
+      if (!digitalRead(PIN_RIGHT_BUTTON)) {
+        acc.write(ball_present, sizeof(ball_present));
+      }
+    }
+    if (mainEventFlags & FLAG_INTERRUPT_1) {
+      delay(20);
+      mainEventFlags &= ~FLAG_INTERRUPT_1;
+      if (!digitalRead(PIN_LEFT_BUTTON)) {
+        acc.write(good_ball, sizeof(good_ball));
+      }
+    }
+    if (mainEventFlags & FLAG_INTERRUPT_2) {
+      delay(20);
+      mainEventFlags &= ~FLAG_INTERRUPT_2;
+      if (!digitalRead(PIN_SELECT_BUTTON)) {
+        acc.write(bad_ball, sizeof(bad_ball));
+      }
+    }
+    if (mainEventFlags & FLAG_NEED_TO_SEND_BATTERY_VOLTAGE) {
+      mainEventFlags &= ~FLAG_NEED_TO_SEND_BATTERY_VOLTAGE;
+      acc.write(txBuf, BATTERY_VOLTAGE_REPLY_LENGTH);
+    }
+    if ((stand.getAnalogReading(LOCATION_EXTERNAL) > 950) && (STAGE == NO_BALL_DETECTED)) {
       acc.write(ball_present, sizeof(ball_present));
-      delay(12000);
+      STAGE = MOVING_BALL_TO_SENSOR;
+      lcd.setCursor(0, LINE_2);
+      lcd.print("BALL DETECTED");
+    }
+    if ((stand.getAnalogReading(LOCATION_2) > 950) && (STAGE == MOVING_BALL_TO_SENSOR)) {
+      delay(2000);
       int val = stand.determineBallColor(LOCATION_2);
       if (val >= 0) {
         acc.write(good_ball, sizeof(good_ball));
-        delay(12000);
+        GOOD = true;
+        lcd.setCursor(0, LINE_2);
+        lcd.print("GOOD BALL");
       } else {
         acc.write(bad_ball, sizeof(bad_ball));
-        delay(12000);
+        GOOD = false;
+        lcd.setCursor(0, LINE_2);
+        lcd.print("BAD BALL");
       }
+      STAGE== HANDLING_BALL;
     }
+    if (GOOD && (STAGE == HANDLING_BALL)) {
+
+    } else if (!GOOD && (STAGE == HANDLING_BALL)) {
+      
+    }
+  }
+  
+  // See if there is a new message from the Wild Thumper.
+  if (Serial.available() > 0) {
+    wildThumperCom.handleRxByte(Serial.read());
   }
 //  delay(1000);
 //  stand.setLedState(LED_RED, LOCATION_1 | LOCATION_2 | LOCATION_3, LED_UNDER_AND_FRONT);
