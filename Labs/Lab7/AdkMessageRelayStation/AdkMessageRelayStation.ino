@@ -8,7 +8,7 @@
 #define TEAM_NUMBER 24  // Replace this with your team number.
 
 char manufacturer[] = "Rose-Hulman";
-char model[] = "One Good Gps Reading";
+char model[] = "one_good_gps_reading";
 char versionStr[] = "1.0";
         
 // Only Manufacturer, Model, and Version matter to Android
