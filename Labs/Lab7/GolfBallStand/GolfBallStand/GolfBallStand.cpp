@@ -90,7 +90,7 @@ int GolfBallStand::getAnalogReading(int location) {
 	return photoReading;
 }
 
-int GolfBallStand::determineBallColor(int location) {
+int GolfBallStand::determineBallColor(int location, double errors[6]) {
 	int returnBallType = BALL_NONE;
 	
 	setLedState(LED_OFF, location, LED_UNDER_AND_FRONT);
@@ -176,6 +176,12 @@ int GolfBallStand::determineBallColor(int location) {
 		Serial.println(colorErrors[4]);
 		Serial.print("  LED black error   = ");
 		Serial.println(colorErrors[5]);
+		errors[0] = colorErrors[0];
+		errors[1] = colorErrors[1];
+		errors[2] = colorErrors[2];
+		errors[3] = colorErrors[3];
+		errors[4] = colorErrors[4];
+		errors[5] = colorErrors[5];
 		for (i = 1; i < 6; i++) {
 			if (colorErrors[j] > min(colorErrors[j], colorErrors[i])) {
 				j=i;

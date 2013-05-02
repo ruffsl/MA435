@@ -74,9 +74,9 @@ int currentJoint = 0;
 #define MAX_CURRENT_JOINT 5
 #define NO_BALL_DETECTED 0
 #define MOVING_BALL_TO_SENSOR 1
-#define HANDLING_BALL 2
+#define HANDLING_GOOD_BALL 2
+#define HANDLING_BAD_BALL 3
 int STAGE = NO_BALL_DETECTED;
-boolean GOOD = false;
 
 void setup()  {
   Serial.begin(9600);
@@ -131,7 +131,7 @@ void wheelSpeedMessageFromAndroid(byte leftMode, byte rightMode, byte leftDutyCy
 
 void positionMessageFromAndroid(int joint1Angle, int joint2Angle, int joint3Angle, int joint4Angle, int joint5Angle) {
   wildThumperCom.sendPosition(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle);  
-  lcd.clear();
+  /*lcd.clear();
   lcd.print("Position:");
   lcd.setCursor(0, LINE_2);
   lcd.print(joint1Angle);
@@ -142,18 +142,18 @@ void positionMessageFromAndroid(int joint1Angle, int joint2Angle, int joint3Angl
   lcd.print(" ");
   lcd.print(joint4Angle);
   lcd.print(" ");
-  lcd.print(joint5Angle);
+  lcd.print(joint5Angle);*/
 }
 
 void jointAngleMessageFromAndroid(byte jointNumber, int jointAngle) {
   wildThumperCom.sendJointAngle(jointNumber, jointAngle);
-  lcd.clear();
+  /*lcd.clear();
   lcd.print("Joint angle:");
   lcd.setCursor(0, LINE_2);
   lcd.print("J");
   lcd.print(jointNumber);
   lcd.print(" move to ");
-  lcd.print(jointAngle);
+  lcd.print(jointAngle);*/
 }
 
 void gripperMessageFromAndroid(int gripperDistance) {
@@ -161,11 +161,11 @@ void gripperMessageFromAndroid(int gripperDistance) {
     gripperDistance = 10;
   }
   wildThumperCom.sendGripperDistance(gripperDistance);
-  lcd.clear();
+  /*lcd.clear();
   lcd.print("Gripper:");
   lcd.setCursor(0, LINE_2);
   lcd.print("Gripper to ");
-  lcd.print(gripperDistance);
+  lcd.print(gripperDistance);*/
 }   
 
 void batteryVoltageRequestFromAndroid(void) {
@@ -232,24 +232,36 @@ void loop(){
     }
     if ((stand.getAnalogReading(LOCATION_2) > 950) && (STAGE == MOVING_BALL_TO_SENSOR)) {
       delay(2000);
-      int val = stand.determineBallColor(LOCATION_2);
+      double errors[] = {0, 0, 0, 0, 0, 0};
+      int val = stand.determineBallColor(LOCATION_2, errors);
+      lcd.setCursor(0, LINE_1);
+      lcd.print(errors[0]);
+      lcd.print("   ");
+      lcd.print(errors[1]);
+      lcd.print("   ");
+      lcd.print(errors[2]);
+      lcd.setCursor(0, LINE_2);
+      lcd.print(errors[3]);
+      lcd.print("   ");
+      lcd.print(errors[4]);
+      lcd.print("   ");
+      lcd.print(errors[5]);
       if (val >= 0) {
         acc.write(good_ball, sizeof(good_ball));
-        GOOD = true;
         lcd.setCursor(0, LINE_2);
         lcd.print("GOOD BALL");
+        STAGE= HANDLING_GOOD_BALL;
       } else {
         acc.write(bad_ball, sizeof(bad_ball));
-        GOOD = false;
         lcd.setCursor(0, LINE_2);
         lcd.print("BAD BALL");
+        STAGE= HANDLING_BAD_BALL;
       }
-      STAGE== HANDLING_BALL;
     }
-    if (GOOD && (STAGE == HANDLING_BALL)) {
-
-    } else if (!GOOD && (STAGE == HANDLING_BALL)) {
-      
+    if (STAGE == HANDLING_GOOD_BALL) {
+      STAGE = NO_BALL_DETECTED;
+    } else if (STAGE == HANDLING_BAD_BALL) {
+      STAGE = NO_BALL_DETECTED;
     }
   }
   

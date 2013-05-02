@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Golf Ball GPS</string>
+    <string name="degrees_format">%1$.0fº</string>
+    <string name="xy_format">(%1$.0f,%2$.0f)</string>
+</resources>
