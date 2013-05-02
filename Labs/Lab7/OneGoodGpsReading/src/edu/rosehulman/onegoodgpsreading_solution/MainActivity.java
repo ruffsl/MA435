@@ -10,16 +10,48 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
-import edu.rosehulman.me435.AccessoryActivity;
 import edu.rosehulman.me435.FieldGpsListener;
 import edu.rosehulman.me435.FieldOrientationListener;
 import edu.rosehulman.me435.NavUtils;
+import edu.rosehulman.me435.SpeechAccessoryActivity;
 
-public class MainActivity extends AccessoryActivity implements
+public class MainActivity extends SpeechAccessoryActivity implements
 		FieldGpsListener, FieldOrientationListener {
-
+	
+	public static final String ROBOT_NAME = "Moxom";
+	private int mVoiceCommandAngle, mVoiceCommandDistance;
+	
+	@Override
+	protected void onVoiceCommand(int angle, int distance) {
+		super.onVoiceCommand(angle, distance);
+		mVoiceCommandAngle = angle;
+		mVoiceCommandDistance = distance;
+		setState(State.RUNNING_VOICE_COMMAND);
+	}
+	
+	private void useVoiceCommand() {
+		Toast.makeText(this,
+				"Voice command for angle " + mVoiceCommandAngle +
+				" distance " + mVoiceCommandDistance,
+				Toast.LENGTH_LONG).show();
+		
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				setState(State.WAITING_FOR_PICKUP);				
+			}
+		}, 5000);
+	}
+	
 	public enum State {
-		READY_FOR_MISSION, INITIAL_RED_SCRIPT, INITIAL_BLUE_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME
+		READY_FOR_MISSION,
+		INITIAL_RED_SCRIPT,
+		INITIAL_BLUE_SCRIPT,
+		WAITING_FOR_GPS,
+		DRIVING_HOME,
+		WAITING_FOR_PICKUP,
+		RUNNING_VOICE_COMMAND,
+		SEEKING_HOME
 	}
 
 	private State mState = State.READY_FOR_MISSION;
@@ -57,8 +89,12 @@ public class MainActivity extends AccessoryActivity implements
 				setState(State.WAITING_FOR_PICKUP);
 			}
 			break;
+		case WAITING_FOR_GPS:
+			if (getStateTimeMs() > 8000) {
+				setState(State.SEEKING_HOME);  // Give up on GPS.
+			}
 		default:
-			// Other states don't need to do anything in the loop.
+			// Other states don't need to do anything, but could. 
 			break;
 		}
 	};
@@ -196,15 +232,19 @@ public class MainActivity extends AccessoryActivity implements
 			break;
 		case WAITING_FOR_PICKUP:
 			mCurrentStateTextView.setText("WAITING_FOR_PICKUP");
-			// Remain still for 2 seconds.
-			Toast.makeText(this, "Stop", Toast.LENGTH_SHORT).show();
+			startListening("Give " + ROBOT_NAME + " a command");
+			if (getStateTimeMs() > 8000){
+				setState(State.SEEKING_HOME);
+			}
 			break;
 		case RUNNING_VOICE_COMMAND:
 			mCurrentStateTextView.setText("RUNNING_VOICE_COMMAND");
 			// Just received a voice command.
 			// Can't get here until voice control is implemented.
-			Toast.makeText(this, "Just received a voice command (impossible)",
-					Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "Just received a voice command (impossible)",
+//					Toast.LENGTH_SHORT).show();
+
+			useVoiceCommand();
 			break;
 		case SEEKING_HOME:
 			mCurrentStateTextView.setText("SEEKING_HOME");
