@@ -3,24 +3,28 @@ package edu.rosehulman.onegoodgpsreading_solution;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
+import edu.rosehulman.me435.FieldGps;
 import edu.rosehulman.me435.FieldGpsListener;
+import edu.rosehulman.me435.FieldOrientation;
 import edu.rosehulman.me435.FieldOrientationListener;
 import edu.rosehulman.me435.NavUtils;
 import edu.rosehulman.me435.SpeechAccessoryActivity;
 
 public class MainActivity extends SpeechAccessoryActivity implements
 		FieldGpsListener, FieldOrientationListener {
-	
+
 	public static final String ROBOT_NAME = "Moxom";
 	private int mVoiceCommandAngle, mVoiceCommandDistance;
-	
+
 	@Override
 	protected void onVoiceCommand(int angle, int distance) {
 		super.onVoiceCommand(angle, distance);
@@ -28,21 +32,21 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mVoiceCommandDistance = distance;
 		setState(State.RUNNING_VOICE_COMMAND);
 	}
-	
+
 	private void useVoiceCommand() {
-		Toast.makeText(this,
-				"Voice command for angle " + mVoiceCommandAngle +
-				" distance " + mVoiceCommandDistance,
-				Toast.LENGTH_LONG).show();
-		
+		Toast.makeText(
+				this,
+				"Voice command for angle " + mVoiceCommandAngle + " distance "
+						+ mVoiceCommandDistance, Toast.LENGTH_LONG).show();
+
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				setState(State.WAITING_FOR_PICKUP);				
+				setState(State.WAITING_FOR_PICKUP);
 			}
 		}, 5000);
 	}
-	
+
 	public enum State {
 		READY_FOR_MISSION,
 		INITIAL_RED_SCRIPT,
@@ -67,6 +71,10 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private double mCurrentSensorHeading;
 	private Handler mCommandHandler = new Handler();
 	protected Timer mTimer;
+	private PowerManager.WakeLock mWakeLock;
+	private FieldOrientation mFieldOrientation;
+	private FieldGps mFieldGps;
+
 	public static final int LOOP_INTERVAL_MS = 100;
 
 	public void loop() {
@@ -90,11 +98,11 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			}
 			break;
 		case WAITING_FOR_GPS:
-			if (getStateTimeMs() > 8000) {
-				setState(State.SEEKING_HOME);  // Give up on GPS.
-			}
+//			if (getStateTimeMs() > 8000) {
+//				setState(State.SEEKING_HOME); // Give up on GPS.
+//			}
 		default:
-			// Other states don't need to do anything, but could. 
+			// Other states don't need to do anything, but could.
 			break;
 		}
 	};
@@ -104,7 +112,12 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+				| PowerManager.ON_AFTER_RELEASE, "Unused TAG");
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		mFieldGps = new FieldGps(this);
+		mFieldOrientation = new FieldOrientation(this);
 
 		mCurrentStateTextView = (TextView) findViewById(R.id.current_state_textview);
 		mStateTimeTextView = (TextView) findViewById(R.id.state_time_textview);
@@ -154,6 +167,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mCurrentGpsY = y;
 		mCurrentGpsHeading = NO_HEADING_KNOWN;
 		String gpsInfo = getString(R.string.xy_format, x, y);
+		Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
 		if (heading <= 180.0 && heading > -180.0) {
 			gpsInfo += " " + getString(R.string.degrees_format, heading);
 			mCurrentGpsHeading = heading;
@@ -170,7 +184,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	@Override
 	protected void onStart() {
 		super.onStart();
-
+		mWakeLock.acquire();
 		mTimer = new Timer();
 		mTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -182,8 +196,8 @@ public class MainActivity extends SpeechAccessoryActivity implements
 				});
 			}
 		}, 0, LOOP_INTERVAL_MS);
-		// mFieldGps.requestLocationUpdates(this);
-		// mFieldOrientation.registerListener(this);
+		mFieldGps.requestLocationUpdates(this);
+		mFieldOrientation.registerListener(this);
 	}
 
 	@Override
@@ -191,8 +205,10 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		super.onStop();
 		mTimer.cancel();
 		mTimer = null;
-		// mFieldGps.removeUpdates();
-		// mFieldOrientation.unregisterListener();
+		mFieldGps.removeUpdates();
+		mFieldOrientation.unregisterListener();
+		setState(State.READY_FOR_MISSION);
+		mWakeLock.release();
 	}
 
 	protected long getStateTimeMs() {
@@ -225,6 +241,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		case WAITING_FOR_GPS:
 			mCurrentStateTextView.setText("WAITING_FOR_GPS");
 			// Do nothing until a GPS reading with a heading is received.
+			sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 			break;
 		case DRIVING_HOME:
 			mCurrentStateTextView.setText("DRIVING_HOME");
@@ -232,8 +249,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			break;
 		case WAITING_FOR_PICKUP:
 			mCurrentStateTextView.setText("WAITING_FOR_PICKUP");
+			sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 			startListening("Give " + ROBOT_NAME + " a command");
-			if (getStateTimeMs() > 8000){
+			if (getStateTimeMs() > 8000) {
 				setState(State.SEEKING_HOME);
 			}
 			break;
@@ -241,8 +259,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			mCurrentStateTextView.setText("RUNNING_VOICE_COMMAND");
 			// Just received a voice command.
 			// Can't get here until voice control is implemented.
-//			Toast.makeText(this, "Just received a voice command (impossible)",
-//					Toast.LENGTH_SHORT).show();
+			// Toast.makeText(this,
+			// "Just received a voice command (impossible)",
+			// Toast.LENGTH_SHORT).show();
 
 			useVoiceCommand();
 			break;
@@ -287,6 +306,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		rightDutyCycle = (int) Math
 				.round(68.152 * Math.log(turnRadius) - 62.169);
 		timeToStopMs = (int) Math.round(arcLength / ftPerSec);
+		Toast.makeText(this, "Left "+leftDutyCycle+" Right "+ rightDutyCycle, Toast.LENGTH_SHORT).show();
 		sendCommand("WHEEL SPEED FORWARD " + leftDutyCycle + " FORWARD "
 				+ rightDutyCycle);
 		mCommandHandler.postDelayed(new Runnable() {

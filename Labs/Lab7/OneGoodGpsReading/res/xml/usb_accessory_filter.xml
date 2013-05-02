@@ -2,7 +2,8 @@
 <resources>
     <usb-accessory
         manufacturer="Rose-Hulman"
-        model="One Good Gps Reading"
-        version="1.0" />
+        model="one_good_gps_reading"
+        version="1.0"
+        />
 </resources>
 
