@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import edu.rosehulman.me435.FieldGps;
@@ -74,6 +75,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private PowerManager.WakeLock mWakeLock;
 	private FieldOrientation mFieldOrientation;
 	private FieldGps mFieldGps;
+	private LinearLayout mScrollWindow;
 
 	public static final int LOOP_INTERVAL_MS = 100;
 
@@ -123,7 +125,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mStateTimeTextView = (TextView) findViewById(R.id.state_time_textview);
 		mGpsInfoTextView = (TextView) findViewById(R.id.gps_info_textview);
 		mSensorOrientationTextView = (TextView) findViewById(R.id.orientation_textview);
-
+		mScrollWindow = (LinearLayout) findViewById(R.id.serial_messages);
 		setState(State.READY_FOR_MISSION);
 	}
 
@@ -167,7 +169,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mCurrentGpsY = y;
 		mCurrentGpsHeading = NO_HEADING_KNOWN;
 		String gpsInfo = getString(R.string.xy_format, x, y);
-		Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
+		//Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
 		if (heading <= 180.0 && heading > -180.0) {
 			gpsInfo += " " + getString(R.string.degrees_format, heading);
 			mCurrentGpsHeading = heading;
@@ -241,7 +243,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		case WAITING_FOR_GPS:
 			mCurrentStateTextView.setText("WAITING_FOR_GPS");
 			// Do nothing until a GPS reading with a heading is received.
-			sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
+			sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 			break;
 		case DRIVING_HOME:
 			mCurrentStateTextView.setText("DRIVING_HOME");
@@ -249,7 +251,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			break;
 		case WAITING_FOR_PICKUP:
 			mCurrentStateTextView.setText("WAITING_FOR_PICKUP");
-			sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
+			sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 			startListening("Give " + ROBOT_NAME + " a command");
 			if (getStateTimeMs() > 8000) {
 				setState(State.SEEKING_HOME);
@@ -307,12 +309,12 @@ public class MainActivity extends SpeechAccessoryActivity implements
 				.round(68.152 * Math.log(turnRadius) - 62.169);
 		timeToStopMs = (int) Math.round(arcLength / ftPerSec);
 		Toast.makeText(this, "Left "+leftDutyCycle+" Right "+ rightDutyCycle, Toast.LENGTH_SHORT).show();
-		sendCommand("WHEEL SPEED FORWARD " + leftDutyCycle + " FORWARD "
+		sendADKCommand("WHEEL SPEED FORWARD " + leftDutyCycle + " FORWARD "
 				+ rightDutyCycle);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
+				sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 				setState(State.WAITING_FOR_PICKUP);
 			}
 		}, timeToStopMs);
@@ -346,313 +348,313 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 218 REVERSE 218");
+				sendADKCommand("WHEEL SPEED REVERSE 218 REVERSE 218");
 			}
 		}, 401);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
+				sendADKCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
 			}
 		}, 538);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 255 REVERSE 243");
+				sendADKCommand("WHEEL SPEED REVERSE 255 REVERSE 243");
 			}
 		}, 6691);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 255 REVERSE 216");
+				sendADKCommand("WHEEL SPEED REVERSE 255 REVERSE 216");
 			}
 		}, 6830);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 255 REVERSE 186");
+				sendADKCommand("WHEEL SPEED REVERSE 255 REVERSE 186");
 			}
 		}, 7169);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
+				sendADKCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
 			}
 		}, 7508);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 238 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 238 REVERSE 255");
 			}
 		}, 7946);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 235 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 235 REVERSE 255");
 			}
 		}, 8084);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 172 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 172 REVERSE 255");
 			}
 		}, 8222);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 142 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 142 REVERSE 255");
 			}
 		}, 8361);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 134 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 134 REVERSE 255");
 			}
 		}, 8499);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 137 REVERSE 255");
+				sendADKCommand("WHEEL SPEED REVERSE 137 REVERSE 255");
 			}
 		}, 8637);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
+				sendADKCommand("WHEEL SPEED REVERSE 249 REVERSE 249");
 			}
 		}, 8877);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
+				sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
 			}
 		}, 12724);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 13262);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 252");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 252");
 			}
 		}, 13702);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 213");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 213");
 			}
 		}, 13840);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 207");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 207");
 			}
 		}, 13978);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 233");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 233");
 			}
 		}, 14618);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 137 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 137 FORWARD 255");
 			}
 		}, 14756);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 128 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 128 FORWARD 255");
 			}
 		}, 14895);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 67 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 67 FORWARD 255");
 			}
 		}, 15034);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 15172);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 240 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 240 FORWARD 255");
 			}
 		}, 16112);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 150 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 150 FORWARD 255");
 			}
 		}, 16250);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 16390);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 95 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 95 FORWARD 255");
 			}
 		}, 16829);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 16966);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 17106);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 217 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 217 FORWARD 255");
 			}
 		}, 17244);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 104 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 104 FORWARD 255");
 			}
 		}, 17382);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 17521);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 126 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 126 FORWARD 255");
 			}
 		}, 17760);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 93 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 93 FORWARD 255");
 			}
 		}, 17898);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 18036);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 239");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 239");
 			}
 		}, 18476);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 200");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 200");
 			}
 		}, 18614);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 178");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 178");
 			}
 		}, 18752);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 18992);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 238 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 238 FORWARD 255");
 			}
 		}, 20132);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 232 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 232 FORWARD 255");
 			}
 		}, 20271);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 20409);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 129 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 129 FORWARD 255");
 			}
 		}, 20548);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 150 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 150 FORWARD 255");
 			}
 		}, 20686);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 20825);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 203 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 203 FORWARD 255");
 			}
 		}, 22066);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 151 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 151 FORWARD 255");
 			}
 		}, 22204);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 255 FORWARD 255");
 			}
 		}, 22343);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 209 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 209 FORWARD 255");
 			}
 		}, 22582);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 196 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 196 FORWARD 255");
 			}
 		}, 22720);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 247 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 247 FORWARD 255");
 			}
 		}, 22858);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				sendCommand("WHEEL SPEED FORWARD 239 FORWARD 255");
+				sendADKCommand("WHEEL SPEED FORWARD 239 FORWARD 255");
 			}
 		}, 23098);
 		mCommandHandler.postDelayed(new Runnable() {
@@ -661,6 +663,13 @@ public class MainActivity extends SpeechAccessoryActivity implements
 				setState(State.WAITING_FOR_GPS);
 			}
 		}, 26845);
+	}
+	
+	private void sendADKCommand(String command) {
+		TextView update = new TextView(this);
+		update.setText(command);
+		mScrollWindow.addView(update, 0);
+		sendCommand(command);
 	}
 
 }

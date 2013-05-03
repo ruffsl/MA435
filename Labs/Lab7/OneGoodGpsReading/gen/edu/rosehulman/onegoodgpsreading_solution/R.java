@@ -10,6 +10,9 @@ package edu.rosehulman.onegoodgpsreading_solution;
 public final class R {
     public static final class attr {
     }
+    public static final class color {
+        public static final int silver=0x7f070000;
+    }
     public static final class drawable {
         public static final int black_button=0x7f020000;
         public static final int blue_button=0x7f020001;
@@ -20,18 +23,23 @@ public final class R {
         public static final int yellow_button=0x7f020006;
     }
     public static final class id {
-        public static final int blue_go_button=0x7f070001;
-        public static final int current_state_textview=0x7f070004;
-        public static final int fake_gps_button=0x7f07000b;
-        public static final int gps_info_textview=0x7f070008;
-        public static final int gps_label=0x7f070007;
-        public static final int mission_complete_button=0x7f070002;
-        public static final int orientation_label=0x7f070009;
-        public static final int orientation_textview=0x7f07000a;
-        public static final int red_go_button=0x7f070000;
-        public static final int state_label=0x7f070003;
-        public static final int state_time_label=0x7f070005;
-        public static final int state_time_textview=0x7f070006;
+        public static final int blue_go_button=0x7f080001;
+        public static final int button_1=0x7f08000f;
+        public static final int button_2=0x7f080010;
+        public static final int button_frame=0x7f08000c;
+        public static final int current_state_textview=0x7f080004;
+        public static final int fake_gps_button=0x7f08000b;
+        public static final int gps_info_textview=0x7f080008;
+        public static final int gps_label=0x7f080007;
+        public static final int mission_complete_button=0x7f080002;
+        public static final int orientation_label=0x7f080009;
+        public static final int orientation_textview=0x7f08000a;
+        public static final int red_go_button=0x7f080000;
+        public static final int scrollView1=0x7f08000d;
+        public static final int serial_messages=0x7f08000e;
+        public static final int state_label=0x7f080003;
+        public static final int state_time_label=0x7f080005;
+        public static final int state_time_textview=0x7f080006;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
