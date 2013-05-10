@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#444"
-    android:padding="25dp"
+    android:padding="15dp"
     tools:context=".MainActivity" >
 
     <LinearLayout
@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/red_button"
-            android:onClick="handleRedTeamGo"
+            android:onClick="handleRedFigure8"
             android:text="Red Figure 8"
             android:textSize="16sp" />
         
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/black_button"
-            android:onClick="handleRedTeamGo"
+            android:onClick="handleOutBack"
             android:text="Out and Back"
             android:textSize="16sp" />
 
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/blue_button"
-            android:onClick="handleBlueTeamGo"
+            android:onClick="handleBlueFigure8"
             android:text="Blue Figure 8"
             android:textSize="16sp" />
     </LinearLayout>
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/red_button"
-            android:onClick="handleRedTeamGo"
+            android:onClick="handleRedHalfCircle"
             android:text="Red Semicircle"
             android:textSize="16sp" />
         
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/black_button"
-            android:onClick="handleRedTeamGo"
+            android:onClick="handleLameScript"
             android:text="Lame Script"
             android:textSize="16sp" />
 
@@ -84,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/blue_button"
-            android:onClick="handleBlueTeamGo"
+            android:onClick="handleBlueHalfCircle"
             android:text="Blue Semicircle"
             android:textSize="16sp" />
     </LinearLayout>
@@ -160,7 +160,7 @@
     <ScrollView
         android:id="@+id/scrollView1"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="150dp"
         android:layout_below="@+id/orientation_label"
         android:layout_marginTop="10dp"
         android:background="@color/silver" >
@@ -198,7 +198,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/black_button"
-            android:onClick="handleFakeGps"
+            android:onClick="handleSetOrigin"
             android:text="Set Origin"
             android:textSize="14sp" />
 
@@ -209,7 +209,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/black_button"
-            android:onClick="handleFakeGps"
+            android:onClick="handleButton2"
             android:text="Button 2"
             android:textSize="14sp" />
     </LinearLayout>

@@ -49,14 +49,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 
 	public enum State {
-		READY_FOR_MISSION,
-		INITIAL_RED_SCRIPT,
-		INITIAL_BLUE_SCRIPT,
-		WAITING_FOR_GPS,
-		DRIVING_HOME,
-		WAITING_FOR_PICKUP,
-		RUNNING_VOICE_COMMAND,
-		SEEKING_HOME
+		READY_FOR_MISSION, RED_FIGURE_8_SCRIPT, BLUE_FIGURE_8_SCRIPT, RED_HALF_CIRCLE_SCRIPT, BLUE_HALF_CIRCLE_SCRIPT, OUT_AND_BACK_SCRIPT, LAME_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME
 	}
 
 	private State mState = State.READY_FOR_MISSION;
@@ -100,9 +93,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			}
 			break;
 		case WAITING_FOR_GPS:
-//			if (getStateTimeMs() > 8000) {
-//				setState(State.SEEKING_HOME); // Give up on GPS.
-//			}
+			// if (getStateTimeMs() > 8000) {
+			// setState(State.SEEKING_HOME); // Give up on GPS.
+			// }
 		default:
 			// Other states don't need to do anything, but could.
 			break;
@@ -140,14 +133,34 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		// Roll is orientationValues[2]
 	}
 
-	public void handleRedTeamGo(View view) {
+	public void handleRedFigure8(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
-		setState(State.INITIAL_RED_SCRIPT);
+		setState(State.RED_FIGURE_8_SCRIPT);
 	}
 
-	public void handleBlueTeamGo(View view) {
+	public void handleRedHalfCircle(View view) {
+		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		setState(State.RED_HALF_CIRCLE_SCRIPT);
+	}
+
+	public void handleBlueFigure8(View view) {
 		// Toast.makeText(this, "Go Blue Team", Toast.LENGTH_SHORT).show();
-		setState(State.INITIAL_BLUE_SCRIPT);
+		setState(State.BLUE_FIGURE_8_SCRIPT);
+	}
+
+	public void handleBlueHalfCircle(View view) {
+		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		setState(State.BLUE_HALF_CIRCLE_SCRIPT);
+	}
+
+	public void handleOutBack(View view) {
+		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		setState(State.OUT_AND_BACK_SCRIPT);
+	}
+
+	public void handleLameScript(View view) {
+		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		setState(State.LAME_SCRIPT);
 	}
 
 	public void handleFakeGps(View view) {
@@ -169,7 +182,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mCurrentGpsY = y;
 		mCurrentGpsHeading = NO_HEADING_KNOWN;
 		String gpsInfo = getString(R.string.xy_format, x, y);
-		//Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
+		// Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
 		if (heading <= 180.0 && heading > -180.0) {
 			gpsInfo += " " + getString(R.string.degrees_format, heading);
 			mCurrentGpsHeading = heading;
@@ -230,15 +243,35 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			mCurrentStateTextView.setText("READY_FOR_MISSION");
 			// Do nothing until the button is pressed.
 			break;
-		case INITIAL_RED_SCRIPT:
-			mCurrentStateTextView.setText("INITIAL_RED_SCRIPT");
+		case RED_FIGURE_8_SCRIPT:
+			mCurrentStateTextView.setText("RED_FIGURE_8_SCRIPT");
 			mGpsInfoTextView.setText("---"); // Clear GPS display
-			runScriptRed01();
+			runScriptRedFigure8();
 			break;
-		case INITIAL_BLUE_SCRIPT:
-			mCurrentStateTextView.setText("INITIAL_BLUE_SCRIPT");
+		case RED_HALF_CIRCLE_SCRIPT:
+			mCurrentStateTextView.setText("RED_HALF_CIRCLE_SCRIPT");
 			mGpsInfoTextView.setText("---"); // Clear GPS display
-			runScriptBlue01();
+			runScriptRedHalfCircle();
+			break;
+		case BLUE_FIGURE_8_SCRIPT:
+			mCurrentStateTextView.setText("BLUE_FIGURE_8_SCRIPT");
+			mGpsInfoTextView.setText("---"); // Clear GPS display
+			runScriptBlueFigure8();
+			break;
+		case BLUE_HALF_CIRCLE_SCRIPT:
+			mCurrentStateTextView.setText("BLUE_HALF_CIRCLE_SCRIPT");
+			mGpsInfoTextView.setText("---"); // Clear GPS display
+			runScriptBlueHalfCircle();
+			break;
+		case OUT_AND_BACK_SCRIPT:
+			mCurrentStateTextView.setText("OUT_AND_BACK_SCRIPT");
+			mGpsInfoTextView.setText("---"); // Clear GPS display
+			runScriptOutandBack();
+			break;
+		case LAME_SCRIPT:
+			mCurrentStateTextView.setText("LAME_SCRIPT");
+			mGpsInfoTextView.setText("---"); // Clear GPS display
+			runScriptLame();
 			break;
 		case WAITING_FOR_GPS:
 			mCurrentStateTextView.setText("WAITING_FOR_GPS");
@@ -308,7 +341,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		rightDutyCycle = (int) Math
 				.round(68.152 * Math.log(turnRadius) - 62.169);
 		timeToStopMs = (int) Math.round(arcLength / ftPerSec);
-		Toast.makeText(this, "Left "+leftDutyCycle+" Right "+ rightDutyCycle, Toast.LENGTH_SHORT).show();
+		Toast.makeText(this,
+				"Left " + leftDutyCycle + " Right " + rightDutyCycle,
+				Toast.LENGTH_SHORT).show();
 		sendADKCommand("WHEEL SPEED FORWARD " + leftDutyCycle + " FORWARD "
 				+ rightDutyCycle);
 		mCommandHandler.postDelayed(new Runnable() {
@@ -320,31 +355,18 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		}, timeToStopMs);
 	}
 
-	private void runScriptRed01() {
-		Toast.makeText(this, "Red script step 0", Toast.LENGTH_SHORT).show();
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				Toast.makeText(MainActivity.this, "Red script step 1",
-						Toast.LENGTH_SHORT).show();
-			}
-		}, 2000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				Toast.makeText(MainActivity.this, "Red script step 2",
-						Toast.LENGTH_SHORT).show();
-			}
-		}, 4000);
+	private void runScriptRedFigure8() {
+		Toast.makeText(this, "Red Figure Eight", Toast.LENGTH_SHORT).show();
+		
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
 				setState(State.WAITING_FOR_GPS);
 			}
-		}, 6000);
+		}, 4000);
 	}
 
-	private void runScriptBlue01() {
+	private void runScriptOutandBack() {
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
@@ -664,7 +686,51 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			}
 		}, 26845);
 	}
-	
+
+	private void runScriptLame() {
+		Toast.makeText(this, "Lame Script", Toast.LENGTH_SHORT).show();
+		
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				setState(State.WAITING_FOR_GPS);
+			}
+		}, 4000);
+	}
+
+	private void runScriptBlueHalfCircle() {
+		Toast.makeText(this, "Blue Half Circle", Toast.LENGTH_SHORT).show();
+		
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				setState(State.WAITING_FOR_GPS);
+			}
+		}, 4000);
+	}
+
+	private void runScriptBlueFigure8() {
+		Toast.makeText(this, "Blue Figure Eight", Toast.LENGTH_SHORT).show();
+		
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				setState(State.WAITING_FOR_GPS);
+			}
+		}, 4000);
+	}
+
+	private void runScriptRedHalfCircle() {
+		Toast.makeText(this, "Red Half Circle", Toast.LENGTH_SHORT).show();
+		
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				setState(State.WAITING_FOR_GPS);
+			}
+		}, 4000);
+	}
+
 	private void sendADKCommand(String command) {
 		TextView update = new TextView(this);
 		update.setText(command);
