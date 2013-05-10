@@ -24,19 +24,24 @@ public final class R {
     }
     public static final class id {
         public static final int blue_go_button=0x7f080001;
-        public static final int button_1=0x7f08000f;
-        public static final int button_2=0x7f080010;
+        public static final int blue_half_button=0x7f080011;
+        public static final int button_1=0x7f080014;
+        public static final int button_2=0x7f080015;
         public static final int button_frame=0x7f08000c;
+        public static final int button_frame_2=0x7f08000e;
         public static final int current_state_textview=0x7f080004;
         public static final int fake_gps_button=0x7f08000b;
         public static final int gps_info_textview=0x7f080008;
         public static final int gps_label=0x7f080007;
+        public static final int lame_button=0x7f080010;
         public static final int mission_complete_button=0x7f080002;
         public static final int orientation_label=0x7f080009;
         public static final int orientation_textview=0x7f08000a;
+        public static final int out_back_button=0x7f08000d;
         public static final int red_go_button=0x7f080000;
-        public static final int scrollView1=0x7f08000d;
-        public static final int serial_messages=0x7f08000e;
+        public static final int red_half_button=0x7f08000f;
+        public static final int scrollView1=0x7f080012;
+        public static final int serial_messages=0x7f080013;
         public static final int state_label=0x7f080003;
         public static final int state_time_label=0x7f080005;
         public static final int state_time_textview=0x7f080006;
