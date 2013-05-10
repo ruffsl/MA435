@@ -49,7 +49,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 
 	public enum State {
-		READY_FOR_MISSION, RED_FIGURE_8_SCRIPT, BLUE_FIGURE_8_SCRIPT, RED_HALF_CIRCLE_SCRIPT, BLUE_HALF_CIRCLE_SCRIPT, OUT_AND_BACK_SCRIPT, LAME_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME
+		READY_FOR_MISSION, RED_FIGURE_8_SCRIPT, BLUE_FIGURE_8_SCRIPT, RED_HALF_CIRCLE_SCRIPT, BLUE_HALF_CIRCLE_SCRIPT, OUT_AND_BACK_SCRIPT, LAME_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME, STOPPED, CORRECTIVE_SCRIPT, STRAIGHT_FOR_GPS
 	}
 
 	private State mState = State.READY_FOR_MISSION;
@@ -167,6 +167,23 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		// Toast.makeText(this, "Send fake GPS signal",
 		// Toast.LENGTH_SHORT).show();
 		onLocationChanged(40, 10, 135, null);
+	}
+	
+	public void setOrigin(View view) {
+		Toast.makeText(this, "TODO: Set Origin", Toast.LENGTH_SHORT).show();
+	}
+	
+	public void kill(View view) {
+		mCommandHandler.removeCallbacks(new Runnable() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+		setState(State.STOPPED);
 	}
 
 	public void handleMissionComplete(View view) {
@@ -305,6 +322,15 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			// Use the GPS and FieldOrientation sensor to find home.
 			// Note, you could also drive in a spiral hoping you are close.
 			Toast.makeText(this, "Seeking home", Toast.LENGTH_SHORT).show();
+			break;
+		case STOPPED:
+			mCurrentStateTextView.setText("STOPPED");
+			break;
+		case STRAIGHT_FOR_GPS:
+			mCurrentStateTextView.setText("STRAIGHT_FOR_GPS");
+			break;
+		case CORRECTIVE_SCRIPT:
+			mCurrentStateTextView.setText("CORRECTIVE_SCRIPT");
 			break;
 		}
 		mState = newState;
@@ -737,5 +763,4 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mScrollWindow.addView(update, 0);
 		sendCommand(command);
 	}
-
 }

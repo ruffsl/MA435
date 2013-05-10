@@ -9,13 +9,13 @@ int drawable yellow_button 0x7f020006
 int id blue_go_button 0x7f080001
 int id blue_half_button 0x7f080011
 int id button_1 0x7f080014
-int id button_2 0x7f080015
 int id button_frame 0x7f08000c
 int id button_frame_2 0x7f08000e
 int id current_state_textview 0x7f080004
 int id fake_gps_button 0x7f08000b
 int id gps_info_textview 0x7f080008
 int id gps_label 0x7f080007
+int id kill_button 0x7f080015
 int id lame_button 0x7f080010
 int id mission_complete_button 0x7f080002
 int id orientation_label 0x7f080009

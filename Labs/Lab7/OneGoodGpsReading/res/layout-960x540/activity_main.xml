@@ -21,8 +21,8 @@
             android:layout_weight="1"
             android:background="@drawable/red_button"
             android:onClick="handleRedFigure8"
-            android:text="Red Figure 8"
-            android:textSize="16sp" />
+            android:text="Figure Eight"
+            android:textSize="14sp" />
         
         <Button
             android:id="@+id/out_back_button"
@@ -33,7 +33,7 @@
             android:background="@drawable/black_button"
             android:onClick="handleOutBack"
             android:text="Out and Back"
-            android:textSize="16sp" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/blue_go_button"
@@ -43,8 +43,8 @@
             android:layout_weight="1"
             android:background="@drawable/blue_button"
             android:onClick="handleBlueFigure8"
-            android:text="Blue Figure 8"
-            android:textSize="16sp" />
+            android:text="Figure Eight"
+            android:textSize="14sp" />
     </LinearLayout>
     
     <LinearLayout
@@ -63,8 +63,8 @@
             android:layout_weight="1"
             android:background="@drawable/red_button"
             android:onClick="handleRedHalfCircle"
-            android:text="Red Semicircle"
-            android:textSize="16sp" />
+            android:text="Semicircle"
+            android:textSize="14sp" />
         
         <Button
             android:id="@+id/lame_button"
@@ -75,7 +75,7 @@
             android:background="@drawable/black_button"
             android:onClick="handleLameScript"
             android:text="Lame Script"
-            android:textSize="16sp" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/blue_half_button"
@@ -85,8 +85,8 @@
             android:layout_weight="1"
             android:background="@drawable/blue_button"
             android:onClick="handleBlueHalfCircle"
-            android:text="Blue Semicircle"
-            android:textSize="16sp" />
+            android:text="Semicircle"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <TextView
@@ -203,14 +203,14 @@
             android:textSize="14sp" />
 
         <Button
-            android:id="@+id/button_2"
+            android:id="@+id/kill_button"
             style="@style/ColorButton.AbsoluteSizeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/black_button"
-            android:onClick="handleButton2"
-            android:text="Button 2"
+            android:background="@drawable/red_button"
+            android:onClick="kill"
+            android:text="Stop"
             android:textSize="14sp" />
     </LinearLayout>
 
