@@ -40,11 +40,11 @@ public final class R {
         public static final int out_back_button=0x7f08000d;
         public static final int red_go_button=0x7f080000;
         public static final int red_half_button=0x7f08000f;
-        public static final int scrollView1=0x7f080012;
         public static final int serial_messages=0x7f080013;
         public static final int state_label=0x7f080003;
         public static final int state_time_label=0x7f080005;
         public static final int state_time_textview=0x7f080006;
+        public static final int terminal=0x7f080012;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;

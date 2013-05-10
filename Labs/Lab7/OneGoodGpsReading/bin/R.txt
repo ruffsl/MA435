@@ -23,11 +23,11 @@ int id orientation_textview 0x7f08000a
 int id out_back_button 0x7f08000d
 int id red_go_button 0x7f080000
 int id red_half_button 0x7f08000f
-int id scrollView1 0x7f080012
 int id serial_messages 0x7f080013
 int id state_label 0x7f080003
 int id state_time_label 0x7f080005
 int id state_time_textview 0x7f080006
+int id terminal 0x7f080012
 int layout activity_main 0x7f030000
 int string app_name 0x7f050000
 int string degrees_format 0x7f050001

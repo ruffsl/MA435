@@ -69,8 +69,8 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private PowerManager.WakeLock mWakeLock;
 	private FieldOrientation mFieldOrientation;
 	private FieldGps mFieldGps;
-	private LinearLayout mScrollWindow;
 	private ScrollView mScroll;
+	private LinearLayout mScrollWindow;
 
 	public static final int LOOP_INTERVAL_MS = 100;
 
@@ -120,8 +120,8 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mStateTimeTextView = (TextView) findViewById(R.id.state_time_textview);
 		mGpsInfoTextView = (TextView) findViewById(R.id.gps_info_textview);
 		mSensorOrientationTextView = (TextView) findViewById(R.id.orientation_textview);
+		mScroll = (ScrollView) findViewById(R.id.terminal);
 		mScrollWindow = (LinearLayout) findViewById(R.id.serial_messages);
-		mScroll = (ScrollView) findViewById(R.id.scrollView1);
 		setState(State.READY_FOR_MISSION);
 	}
 
@@ -138,51 +138,62 @@ public class MainActivity extends SpeechAccessoryActivity implements
 
 	public void handleRedFigure8(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---RED FIGURE EIGHT SCRIPT---");
 		setState(State.RED_FIGURE_8_SCRIPT);
 	}
 
 	public void handleRedHalfCircle(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---RED HALF CIRCLE SCRIPT---");
 		setState(State.RED_HALF_CIRCLE_SCRIPT);
 	}
 
 	public void handleBlueFigure8(View view) {
 		// Toast.makeText(this, "Go Blue Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---BLUE FIGURE EIGHT SCRIPT---");
 		setState(State.BLUE_FIGURE_8_SCRIPT);
 	}
 
 	public void handleBlueHalfCircle(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---BLUE HALF CIRCLE SCRIPT---");
 		setState(State.BLUE_HALF_CIRCLE_SCRIPT);
 	}
 
 	public void handleOutBack(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---OUT AND BACK SCRIPT---");
 		setState(State.OUT_AND_BACK_SCRIPT);
 	}
 
 	public void handleLameScript(View view) {
 		// Toast.makeText(this, "Go Red Team", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---LAME SCRIPT---");
 		setState(State.LAME_SCRIPT);
 	}
 
 	public void handleFakeGps(View view) {
 		// Toast.makeText(this, "Send fake GPS signal",
 		// Toast.LENGTH_SHORT).show();
+		writeToTerminal("GPS SIGNAL FAKED AS: (40,10) 135°");
 		onLocationChanged(40, 10, 135, null);
 	}
-	
+
 	public void setOrigin(View view) {
 		Toast.makeText(this, "TODO: Set Origin", Toast.LENGTH_SHORT).show();
+		writeToTerminal("Origin set");
 	}
 	
 	public void kill(View view) {
+		sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
+		writeToTerminal("---EMERGENCY STOP---");
 		mCommandHandler.removeCallbacksAndMessages(null);
 		setState(State.STOPPED);
 	}
 
 	public void handleMissionComplete(View view) {
 		// Toast.makeText(this, "Mission Complete", Toast.LENGTH_SHORT).show();
+		writeToTerminal("---MISSION COMPLETE---");
 		setState(State.READY_FOR_MISSION);
 	}
 
@@ -750,6 +761,13 @@ public class MainActivity extends SpeechAccessoryActivity implements
 				setState(State.WAITING_FOR_GPS);
 			}
 		}, 4000);
+	}
+	
+	private void writeToTerminal(String command) {
+		TextView update = new TextView(this);
+		update.setText(command);
+		mScrollWindow.addView(update);
+		mScroll.fullScroll(View.FOCUS_DOWN);
 	}
 
 	private void sendADKCommand(String command) {
