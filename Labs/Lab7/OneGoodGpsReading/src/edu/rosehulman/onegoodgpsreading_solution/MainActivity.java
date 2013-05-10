@@ -11,6 +11,7 @@ import android.os.PowerManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import edu.rosehulman.me435.FieldGps;
@@ -69,6 +70,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private FieldOrientation mFieldOrientation;
 	private FieldGps mFieldGps;
 	private LinearLayout mScrollWindow;
+	private ScrollView mScroll;
 
 	public static final int LOOP_INTERVAL_MS = 100;
 
@@ -119,6 +121,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mGpsInfoTextView = (TextView) findViewById(R.id.gps_info_textview);
 		mSensorOrientationTextView = (TextView) findViewById(R.id.orientation_textview);
 		mScrollWindow = (LinearLayout) findViewById(R.id.serial_messages);
+		mScroll = (ScrollView) findViewById(R.id.scrollView1);
 		setState(State.READY_FOR_MISSION);
 	}
 
@@ -174,15 +177,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 	
 	public void kill(View view) {
-		mCommandHandler.removeCallbacks(new Runnable() {
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
+		mCommandHandler.removeCallbacksAndMessages(null);
 		setState(State.STOPPED);
 	}
 
@@ -760,7 +755,8 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private void sendADKCommand(String command) {
 		TextView update = new TextView(this);
 		update.setText(command);
-		mScrollWindow.addView(update, 0);
+		mScrollWindow.addView(update);
+		mScroll.fullScroll(View.FOCUS_DOWN);
 		sendCommand(command);
 	}
 }
