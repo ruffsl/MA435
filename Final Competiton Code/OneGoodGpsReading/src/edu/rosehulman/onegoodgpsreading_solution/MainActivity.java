@@ -23,9 +23,66 @@ import edu.rosehulman.me435.SpeechAccessoryActivity;
 
 public class MainActivity extends SpeechAccessoryActivity implements
 		FieldGpsListener, FieldOrientationListener {
+	
+	public enum State {
+		READY_FOR_MISSION, RED_FIGURE_8_SCRIPT, BLUE_FIGURE_8_SCRIPT, RED_HALF_CIRCLE_SCRIPT, BLUE_HALF_CIRCLE_SCRIPT, OUT_AND_BACK_SCRIPT, LAME_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME, STOPPED, CORRECTIVE_SCRIPT, STRAIGHT_FOR_GPS
+	}
+	
+	private class Point {
+		public int x;
+		public int y;
+		
+		public Point(int i, int j) {
+			x = i;
+			y = j;
+		}
+	}
 
-	public static final String ROBOT_NAME = "Moxom";
+	public static final String ROBOT_NAME	= "Moxom";
+	public static final String HOME 		= "POSITION 0 90 0 -90 90";
+	public static final String ZERO			= "POSITION 0 0 0 0 0";
+	public static final String ABOVEBALL	= "POSITION 9 55 90 0 167";
+	public static final String GETBALL 		= "POSITION 9 125 90 0 167";
+	public static final String CLOSEGRIP 	= "GRIPPER 0";
+	public static final String OPENGRIP 	= "GRIPPER 70";
+	public static final String ABOVEP3		= "POSITION -7 130 -90 -180 0";
+	public static final String ABOVEP2		= "POSITION 20 130 -90 -180 0";
+	public static final String ABOVEP1		= "POSITION 51 130 -90 -180 0";
+	public static final String BALLP3		= "POSITION -7 120 -90 -180 0";
+	public static final String BALLP2		= "POSITION 20 120 -90 -180 0";
+	public static final String BALLP1		= "POSITION 51 120 -90 -180 0";
+	public static final String KOCKBALLP1	= "POSITION 0 0 0 0 0";
+	public static final String DITCHBALLP1	= "POSITION 0 0 0 0 0";
+	private Point P0 = new Point(0,0);
+	private Point P1 = new Point(-20, 35);
+	private Point P2 = new Point(0,50);
+	private Point P3 = new Point(20, 65);
+	private Point P4 = new Point(-20, 65);
+	private Point P5 = new Point(20, 35);
+	private Point Point_Array[] = {P1, P2, P3, P4, P2, P5, P0};
 	private int mVoiceCommandAngle, mVoiceCommandDistance;
+	private State mState = State.READY_FOR_MISSION;
+	private long mStateStartTime = 0;
+	// Various constants and member variable names.
+	private static final String TAG = "OneGoodGps";
+	private static final double NO_HEADING_KNOWN = 360.0;
+	private TextView mCurrentStateTextView, mStateTimeTextView,
+			mGpsInfoTextView, mSensorOrientationTextView;
+	private int mGpsCounter = 0;
+	private double mCurrentGpsX, mCurrentGpsY, mCurrentGpsHeading;
+	private double mCurrentSensorHeading;
+	private Handler mCommandHandler = new Handler();
+	protected Timer mTimer;
+	private PowerManager.WakeLock mWakeLock;
+	private FieldOrientation mFieldOrientation;
+	private FieldGps mFieldGps;
+	private ScrollView mScroll;
+	private LinearLayout mScrollWindow;
+	public int mPoint = 1;
+	public int mIndex = 0;
+	private Point mTarget;
+	public static final int LOOP_INTERVAL_MS = 100;
+	private static final int MIN_DISTANCE_OFFSET = 5;
 
 	@Override
 	protected void onVoiceCommand(int angle, int distance) {
@@ -48,31 +105,6 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			}
 		}, 5000);
 	}
-
-	public enum State {
-		READY_FOR_MISSION, RED_FIGURE_8_SCRIPT, BLUE_FIGURE_8_SCRIPT, RED_HALF_CIRCLE_SCRIPT, BLUE_HALF_CIRCLE_SCRIPT, OUT_AND_BACK_SCRIPT, LAME_SCRIPT, WAITING_FOR_GPS, DRIVING_HOME, WAITING_FOR_PICKUP, RUNNING_VOICE_COMMAND, SEEKING_HOME, STOPPED, CORRECTIVE_SCRIPT, STRAIGHT_FOR_GPS
-	}
-
-	private State mState = State.READY_FOR_MISSION;
-	private long mStateStartTime = 0;
-
-	// Various constants and member variable names.
-	private static final String TAG = "OneGoodGps";
-	private static final double NO_HEADING_KNOWN = 360.0;
-	private TextView mCurrentStateTextView, mStateTimeTextView,
-			mGpsInfoTextView, mSensorOrientationTextView;
-	private int mGpsCounter = 0;
-	private double mCurrentGpsX, mCurrentGpsY, mCurrentGpsHeading;
-	private double mCurrentSensorHeading;
-	private Handler mCommandHandler = new Handler();
-	protected Timer mTimer;
-	private PowerManager.WakeLock mWakeLock;
-	private FieldOrientation mFieldOrientation;
-	private FieldGps mFieldGps;
-	private ScrollView mScroll;
-	private LinearLayout mScrollWindow;
-
-	public static final int LOOP_INTERVAL_MS = 100;
 
 	public void loop() {
 		mStateTimeTextView.setText("" + getStateTimeMs() / 1000);
@@ -98,6 +130,10 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			// if (getStateTimeMs() > 8000) {
 			// setState(State.SEEKING_HOME); // Give up on GPS.
 			// }
+			break;
+		case RED_FIGURE_8_SCRIPT:
+			runScriptRedFigure8();
+			break;
 		default:
 			// Other states don't need to do anything, but could.
 			break;
@@ -179,9 +215,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		onLocationChanged(40, 10, 135, null);
 	}
 
-	public void setOrigin(View view) {
-		Toast.makeText(this, "TODO: Set Origin", Toast.LENGTH_SHORT).show();
+	public void handleSetOrigin(View view) {
 		writeToTerminal("Origin set");
+		mFieldGps.setCurrentLocationAsOrigin();
 	}
 	
 	public void kill(View view) {
@@ -195,6 +231,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		// Toast.makeText(this, "Mission Complete", Toast.LENGTH_SHORT).show();
 		writeToTerminal("---MISSION COMPLETE---");
 		setState(State.READY_FOR_MISSION);
+		mPoint = 1;
 	}
 
 	@Override
@@ -217,6 +254,12 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		}
 		gpsInfo += "    " + mGpsCounter;
 		mGpsInfoTextView.setText(gpsInfo);
+		if (mState == State.RED_FIGURE_8_SCRIPT) {
+			mCommandHandler.removeCallbacksAndMessages(null);
+			double result[] = {0, 0};
+			NavUtils.calculateArc(mCurrentGpsX, mCurrentGpsY, mCurrentGpsHeading, mTarget.x, mTarget.y, result);
+			driveArc(result[0], result[1]);
+		}
 	}
 
 	@Override
@@ -269,7 +312,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		case RED_FIGURE_8_SCRIPT:
 			mCurrentStateTextView.setText("RED_FIGURE_8_SCRIPT");
 			mGpsInfoTextView.setText("---"); // Clear GPS display
-			runScriptRedFigure8();
+			Toast.makeText(this, "Red Figure Eight", Toast.LENGTH_SHORT).show();
+			mTarget = Point_Array[0];
+			onLocationChanged(mCurrentGpsX, mCurrentGpsY, mCurrentGpsHeading, null);
 			break;
 		case RED_HALF_CIRCLE_SCRIPT:
 			mCurrentStateTextView.setText("RED_HALF_CIRCLE_SCRIPT");
@@ -388,14 +433,13 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 
 	private void runScriptRedFigure8() {
-		Toast.makeText(this, "Red Figure Eight", Toast.LENGTH_SHORT).show();
-		
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				setState(State.WAITING_FOR_GPS);
-			}
-		}, 4000);
+		if (NavUtils.getDistance(mCurrentGpsX, mCurrentGpsY, mTarget.x, mTarget.y) < MIN_DISTANCE_OFFSET) {
+			mIndex++;
+			mTarget = Point_Array[mIndex];
+		}
+		if (mIndex == 7) {
+			setState(State.WAITING_FOR_GPS);
+		}
 	}
 
 	private void runScriptOutandBack() {
@@ -764,14 +808,14 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 	
 	public void handleGetBall() {
-//		Toast.makeText(this, "TODO: Implement button", Toast.LENGTH_SHORT).show();
+//		DONE: update the positional references of above ball, get ball, above point 2, and point 2
 		String command = getString(R.string.position_command, 0,90, 0, -90, 90);
 		sendADKCommand(command);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
 			//Above Ball
 			public void run() {
-				String command = getString(R.string.position_command, 90, 85, 58, 0, 149);
+				String command = ABOVEBALL;
 				sendADKCommand(command);			
 			}		
 		}, 2000);
@@ -779,7 +823,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			//Get Ball
 			public void run() {
-				String command = getString(R.string.position_command, 90, 128, 58, 0, 149);
+				String command = GETBALL;
 				sendADKCommand(command);			
 			}		
 		}, 4000);
@@ -787,7 +831,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			//Close Gripper
 			public void run() {
-				String command = getString(R.string.gripper_command, 0);
+				String command = CLOSEGRIP;
 				sendADKCommand(command);				
 			}		
 		}, 6000);
@@ -795,23 +839,43 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			//Above Ball
 			public void run() {
-				String command = getString(R.string.position_command, 90, 85, 58, 0, 149);
+				String command = ABOVEBALL;
 				sendADKCommand(command);			
 			}		
 		}, 8000);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
-			//Above Point 2
+			//Above Point 1
 			public void run() {
-				String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
+				String command;
+				switch (mPoint) {
+				case 1:
+					command = ABOVEP1;
+					break;
+				case 2:
+					command = ABOVEP2;
+					break;
+				default: // case 3
+					command = ABOVEP3;
+				}
 				sendADKCommand(command);			
 			}		
 		}, 10000);
 		mCommandHandler.postDelayed(new Runnable() {
 			@Override
-			//Point 2
+			//Point 1
 			public void run() {
-				String command = getString(R.string.position_command, 0, 107, 88, 0, 169);
+				String command;
+				switch (mPoint) {
+				case 1:
+					command = BALLP1;
+					break;
+				case 2:
+					command = BALLP2;
+					break;
+				default: // case 3
+					command = BALLP3;
+				}
 				sendADKCommand(command);			
 			}		
 		}, 12000);
@@ -819,7 +883,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			//Open Gripper
 			public void run() {
-				String command = getString(R.string.gripper_command, 70);
+				String command = OPENGRIP;
 				sendADKCommand(command);			
 			}		
 		}, 14000);
@@ -827,116 +891,36 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			//Above Point 2
 			public void run() {
-				String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
+				String command;
+				switch (mPoint) {
+				case 1:
+					command = ABOVEP1;
+					break;
+				case 2:
+					command = ABOVEP2;
+					break;
+				default: // case 3
+					command = ABOVEP3;
+				}
 				sendADKCommand(command);			
 			}		
 		}, 16000);
+		mCommandHandler.postDelayed(new Runnable() {
+			@Override
+			//Read sensor
+			public void run() {
+				String command = getString(R.string.read_command, mPoint);
+				sendADKCommand(command);			
+			}		
+		}, 18000);
 	}
 	public void handleBadBall() {
-//		Toast.makeText(this, "TODO: Implement button", Toast.LENGTH_SHORT).show();
-		String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
-		sendADKCommand(command);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Point 2
-			public void run() {
-				String command = getString(R.string.position_command, 0, 107, 88, 0, 169);
-				sendADKCommand(command);			
-			}		
-		}, 2000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Close Gripper
-			public void run() {
-				String command = getString(R.string.gripper_command, 0);
-				sendADKCommand(command);				
-			}		
-		}, 4000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Above Point 2
-			public void run() {
-				String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
-				sendADKCommand(command);			
-			}		
-		}, 6000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Ditch Ball
-			public void run() {
-				String command = getString(R.string.position_command, 90, 180, -2, -77, 149);
-				sendADKCommand(command);			
-			}		
-		}, 8000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Open Gripper
-			public void run() {
-				String command = getString(R.string.gripper_command, 70);
-				sendADKCommand(command);				
-			}		
-		}, 10000);		
+//		TODO: Update the positional references of Point 2, Above Point 2, and Ditch Ball
 	}
 	public void handleGoodBall() {
-//		Toast.makeText(this, "TODO: Implement button", Toast.LENGTH_SHORT).show();
-		String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
+		String command = ZERO;
 		sendADKCommand(command);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Point 2
-			public void run() {
-				String command = getString(R.string.position_command, 0, 107, 88, 0, 169);
-				sendADKCommand(command);			
-			}		
-		}, 2000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Close Gripper
-			public void run() {
-				String command = getString(R.string.gripper_command, 0);
-				sendADKCommand(command);			
-			}		
-		}, 4000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Above Point 2
-			public void run() {
-				String command = getString(R.string.position_command, 0, 60, 90, 0, 169);
-				sendADKCommand(command);			
-			}		
-		}, 6000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Above Bowl
-			public void run() {
-				String command = getString(R.string.position_command, 22, 96, -43, -168, 6);
-				sendADKCommand(command);			
-			}		
-		}, 8000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Bowl
-			public void run() {
-				String command = getString(R.string.position_command, 22, 53, -143, -162, 6);
-				sendADKCommand(command);					
-			}		
-		}, 10000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Open Gripper
-			public void run() {
-				String command = getString(R.string.gripper_command, 70);
-				sendADKCommand(command);			
-			}		
-		}, 12000);
-		mCommandHandler.postDelayed(new Runnable() {
-			@Override
-			//Above Bowl
-			public void run() {
-				String command = getString(R.string.position_command, 22, 96, -43, -168, 6);
-				sendADKCommand(command);			
-			}		
-		}, 14000);	
+		mPoint++;
 	}
 	
 	protected void onCommandReceived(String receivedCommand) {
@@ -950,7 +934,6 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			handleBadBall();
 		}
 		if(receivedCommand.equalsIgnoreCase("present_ball")){
-			Toast.makeText(this, "I triggered", Toast.LENGTH_SHORT).show();
 			handleGetBall();
 		}
 	}

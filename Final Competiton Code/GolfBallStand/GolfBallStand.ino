@@ -13,7 +13,7 @@ char versionStr[] = "1.0";
 // Only Manufacturer, Model, and Version matter to Android
 AndroidAccessory acc(manufacturer,
                      model,
-                     "Final Competition App",
+                     "Final ME435 competition code",
                      versionStr,
                      "https://sites.google.com/site/me435spring2013/",
                      "12345");
@@ -105,6 +105,7 @@ void setup()  {
   robotCom.registerJointAngleCallback(jointAngleMessageFromAndroid);
   robotCom.registerGripperCallback(gripperMessageFromAndroid);
   robotCom.registerBatteryVoltageRequestCallback(batteryVoltageRequestFromAndroid);
+  robotCom.registerReadColorCallback(colorMessageFromAndroid);
   // Note, not using the wheel current feature.
   // Register callbacks for commands you might receive from the Wild Thumper.
   wildThumperCom.registerBatteryVoltageReplyCallback(batteryVoltageReplyFromThumper);
@@ -112,6 +113,41 @@ void setup()  {
   lcd.print("Ready");
   delay(1500);
   acc.powerOn();
+}
+
+void colorMessageFromAndroid(int pos) {
+  double errors[] = {0, 0, 0, 0, 0, 0};
+  int val;
+  if (pos == 1) {
+    val = stand.determineBallColor(LOCATION_1, errors);
+  } else if (pos == 2) {
+    val = stand.determineBallColor(LOCATION_2, errors);
+  } else { //pos == 3
+    val = stand.determineBallColor(LOCATION_3, errors);
+  }
+  lcd.setCursor(0, LINE_1);
+  lcd.print(errors[0]);
+  lcd.print("   ");
+  lcd.print(errors[1]);
+  lcd.print("   ");
+  lcd.print(errors[2]);
+  lcd.setCursor(0, LINE_2);
+  lcd.print(errors[3]);
+  lcd.print("   ");
+  lcd.print(errors[4]);
+  lcd.print("   ");
+  lcd.print(errors[5]);
+  if (val >= 0) {
+    acc.write(good_ball, sizeof(good_ball));
+    lcd.setCursor(0, LINE_2);
+    lcd.print("GOOD BALL");
+    STAGE= HANDLING_GOOD_BALL;
+  } else {
+    acc.write(bad_ball, sizeof(bad_ball));
+    lcd.setCursor(0, LINE_2);
+    lcd.print("BAD BALL");
+    STAGE= HANDLING_BAD_BALL;
+  }
 }
 
 void wheelSpeedMessageFromAndroid(byte leftMode, byte rightMode, byte leftDutyCycle, byte rightDutyCycle) {
@@ -229,34 +265,6 @@ void loop(){
       STAGE = MOVING_BALL_TO_SENSOR;
       lcd.setCursor(0, LINE_2);
       lcd.print("BALL DETECTED");
-    }
-    if ((stand.getAnalogReading(LOCATION_2) > 950) && (STAGE == MOVING_BALL_TO_SENSOR)) {
-      delay(2000);
-      double errors[] = {0, 0, 0, 0, 0, 0};
-      int val = stand.determineBallColor(LOCATION_2, errors);
-      lcd.setCursor(0, LINE_1);
-      lcd.print(errors[0]);
-      lcd.print("   ");
-      lcd.print(errors[1]);
-      lcd.print("   ");
-      lcd.print(errors[2]);
-      lcd.setCursor(0, LINE_2);
-      lcd.print(errors[3]);
-      lcd.print("   ");
-      lcd.print(errors[4]);
-      lcd.print("   ");
-      lcd.print(errors[5]);
-      if (val >= 0) {
-        acc.write(good_ball, sizeof(good_ball));
-        lcd.setCursor(0, LINE_2);
-        lcd.print("GOOD BALL");
-        STAGE= HANDLING_GOOD_BALL;
-      } else {
-        acc.write(bad_ball, sizeof(bad_ball));
-        lcd.setCursor(0, LINE_2);
-        lcd.print("BAD BALL");
-        STAGE= HANDLING_BAD_BALL;
-      }
     }
     if (STAGE == HANDLING_GOOD_BALL) {
       STAGE = NO_BALL_DETECTED;

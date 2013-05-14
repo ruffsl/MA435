@@ -51,15 +51,16 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f050000;
-        public static final int battery_voltage_request=0x7f050009;
+        public static final int battery_voltage_request=0x7f05000a;
         public static final int degrees_format=0x7f050001;
         public static final int gripper_command=0x7f050007;
         public static final int gripper_format=0x7f050004;
         public static final int joint_angle_command=0x7f050005;
         public static final int joint_angle_format=0x7f050003;
         public static final int position_command=0x7f050006;
-        public static final int wheel_current_request=0x7f05000a;
-        public static final int wheel_speed_command=0x7f050008;
+        public static final int read_command=0x7f050008;
+        public static final int wheel_current_request=0x7f05000b;
+        public static final int wheel_speed_command=0x7f050009;
         public static final int xy_format=0x7f050002;
     }
     public static final class style {

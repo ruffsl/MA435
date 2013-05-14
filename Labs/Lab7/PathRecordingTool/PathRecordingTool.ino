@@ -42,9 +42,9 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19, 20);
 #define LINE_1 0
 #define LINE_2 1
 
-#define WHEEL_MODE_REVERSE 0
+#define WHEEL_MODE_REVERSE 2
 #define WHEEL_MODE_BRAKE   1
-#define WHEEL_MODE_FORWARD 2
+#define WHEEL_MODE_FORWARD 0
 #define CENTER_DEADBAND 5
 #define CHANGE_THRESHOLD 5
 

@@ -13,7 +13,7 @@ char versionStr[] = "1.0";
 // Only Manufacturer, Model, and Version matter to Android
 AndroidAccessory acc(manufacturer,
                      model,
-                     "Basic command set to carry out Sliders and Buttons",
+                     "Final Competition App",
                      versionStr,
                      "https://sites.google.com/site/me435spring2013/",
                      "12345");
