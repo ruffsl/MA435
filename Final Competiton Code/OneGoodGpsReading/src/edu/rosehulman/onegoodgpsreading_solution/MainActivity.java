@@ -59,7 +59,9 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	private Point P3 = new Point(20, 65);
 	private Point P4 = new Point(-20, 65);
 	private Point P5 = new Point(20, 35);
-	private Point Point_Array[] = {P1, P2, P3, P4, P2, P5, P0};
+	private Point P6 = new Point(0, 100);
+	private Point Red_Eight_Point_Array[] = {P1, P2, P3, P4, P2, P5, P0};
+	private Point Blue_Eight_Point_Array[] = {P3, P2, P1, P5, P2, P4, P6};
 	private int mVoiceCommandAngle, mVoiceCommandDistance;
 	private State mState = State.READY_FOR_MISSION;
 	private long mStateStartTime = 0;
@@ -243,7 +245,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		mCurrentGpsHeading = NO_HEADING_KNOWN;
 		String gpsInfo = getString(R.string.xy_format, x, y);
 		// Toast.makeText(this, "" + heading, Toast.LENGTH_SHORT).show();
-		if (heading <= 180.0 && heading > -180.0) {
+		if (heading <= 180.0 && heading > -180.0) {            
 			gpsInfo += " " + getString(R.string.degrees_format, heading);
 			mCurrentGpsHeading = heading;
 			if (mState == State.WAITING_FOR_GPS) {
@@ -312,8 +314,8 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		case RED_FIGURE_8_SCRIPT:
 			mCurrentStateTextView.setText("RED_FIGURE_8_SCRIPT");
 			mGpsInfoTextView.setText("---"); // Clear GPS display
-			Toast.makeText(this, "Red Figure Eight", Toast.LENGTH_SHORT).show();
-			mTarget = Point_Array[0];
+			mTarget = Red_Eight_Point_Array[0];
+			mState = newState;
 			onLocationChanged(mCurrentGpsX, mCurrentGpsY, mCurrentGpsHeading, null);
 			break;
 		case RED_HALF_CIRCLE_SCRIPT:
@@ -414,10 +416,20 @@ public class MainActivity extends SpeechAccessoryActivity implements
 		int rightDutyCycle = 255;
 		int timeToStopMs = 1000;
 		int ftPerSec = 3; // ft per sec
-		leftDutyCycle = (int) Math.round(80.74 * Math.log(turnRadius) - 67.346);
-		rightDutyCycle = (int) Math
-				.round(68.152 * Math.log(turnRadius) - 62.169);
-		timeToStopMs = (int) Math.round(arcLength / ftPerSec);
+		if (turnRadius < 0 ) { //left turn
+			leftDutyCycle = (int) Math.round(68.152 * Math.log(Math.abs(turnRadius)) - 62.169);
+		} else { // right turn
+			rightDutyCycle = (int) Math.round(80.74 * Math.log(turnRadius) - 67.346);
+		}
+		timeToStopMs = (int) Math.round(arcLength / ftPerSec)*1000;
+		if (leftDutyCycle > 255) {
+			leftDutyCycle = 255;
+		}
+		if (rightDutyCycle > 255) {
+			rightDutyCycle = 255;
+		}
+		//writeToTerminal("Radius: "+turnRadius);
+		//writeToTerminal("Arc Length: "+arcLength);
 		Toast.makeText(this,
 				"Left " + leftDutyCycle + " Right " + rightDutyCycle,
 				Toast.LENGTH_SHORT).show();
@@ -427,15 +439,17 @@ public class MainActivity extends SpeechAccessoryActivity implements
 			@Override
 			public void run() {
 				sendADKCommand("WHEEL SPEED BRAKE 0 BRAKE 0");
-				setState(State.WAITING_FOR_PICKUP);
 			}
 		}, timeToStopMs);
 	}
 
 	private void runScriptRedFigure8() {
-		if (NavUtils.getDistance(mCurrentGpsX, mCurrentGpsY, mTarget.x, mTarget.y) < MIN_DISTANCE_OFFSET) {
+		double dist = NavUtils.getDistance(mCurrentGpsX, mCurrentGpsY, mTarget.x, mTarget.y);
+		writeToTerminal("Distance to Target: " + dist);
+		if (dist < MIN_DISTANCE_OFFSET) {
+			writeToTerminal("Advancing to next point");
 			mIndex++;
-			mTarget = Point_Array[mIndex];
+			mTarget = Red_Eight_Point_Array[mIndex];
 		}
 		if (mIndex == 7) {
 			setState(State.WAITING_FOR_GPS);
@@ -946,7 +960,7 @@ public class MainActivity extends SpeechAccessoryActivity implements
 	}
 
 	private void sendADKCommand(String command) {
-		writeToTerminal(command);
+		//writeToTerminal(command);
 		sendCommand(command);
 	}
 }

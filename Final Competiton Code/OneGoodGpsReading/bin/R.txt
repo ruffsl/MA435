@@ -8,7 +8,6 @@ int drawable red_button 0x7f020005
 int drawable yellow_button 0x7f020006
 int id blue_go_button 0x7f080001
 int id blue_half_button 0x7f080011
-int id button_1 0x7f080014
 int id button_frame 0x7f08000c
 int id button_frame_2 0x7f08000e
 int id current_state_textview 0x7f080004
@@ -24,6 +23,7 @@ int id out_back_button 0x7f08000d
 int id red_go_button 0x7f080000
 int id red_half_button 0x7f08000f
 int id serial_messages 0x7f080013
+int id set_origin_button 0x7f080014
 int id state_label 0x7f080003
 int id state_time_label 0x7f080005
 int id state_time_textview 0x7f080006

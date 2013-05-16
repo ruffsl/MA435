@@ -25,7 +25,6 @@ public final class R {
     public static final class id {
         public static final int blue_go_button=0x7f080001;
         public static final int blue_half_button=0x7f080011;
-        public static final int button_1=0x7f080014;
         public static final int button_frame=0x7f08000c;
         public static final int button_frame_2=0x7f08000e;
         public static final int current_state_textview=0x7f080004;
@@ -41,6 +40,7 @@ public final class R {
         public static final int red_go_button=0x7f080000;
         public static final int red_half_button=0x7f08000f;
         public static final int serial_messages=0x7f080013;
+        public static final int set_origin_button=0x7f080014;
         public static final int state_label=0x7f080003;
         public static final int state_time_label=0x7f080005;
         public static final int state_time_textview=0x7f080006;
